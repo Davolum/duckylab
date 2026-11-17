@@ -2,6 +2,11 @@
 
 Creador de **cartas propias** de **Magic: The Gathering** y **Disney Lorcana**. Es una app aparte de DuckyCardVerse: aquí solo están las cartas que creas tú.
 
+**Enlace de la app:** https://davolum.github.io/duckylab/
+**Repositorio:** https://github.com/Davolum/duckylab
+
+Cada persona que abre el enlace tiene su propio DuckyLab: lo que crea se guarda en su navegador y no se mezcla con lo de nadie.
+
 ## Qué hace
 
 - **Crear cartas** de Magic o de Lorcana con los botones «+ Carta Magic» y «+ Carta Lorcana».
@@ -51,10 +56,7 @@ Creador de **cartas propias** de **Magic: The Gathering** y **Disney Lorcana**. 
 
 DuckyLab no necesita descargar nada cada día, así que no lleva proceso automático.
 
-1. En GitHub, crea un repositorio nuevo **Public**, por ejemplo `duckylab`.
-2. **Add file → Upload files**, arrastra todos los archivos de la carpeta `duckylab` y pulsa **Commit changes**.
-3. Ve a **Settings → Pages**. En «Build and deployment → Source» elige **Deploy from a branch**, rama **main** y carpeta **/ (root)**. Pulsa **Save**.
-4. En un par de minutos estará en `https://TU-USUARIO.github.io/duckylab/`.
+Ya está publicada en `Davolum/duckylab`, con GitHub Pages desde la rama **main** y la carpeta **/ (root)**. Para actualizarla, sube los archivos nuevos al repositorio con **Add file → Upload files** → **Commit changes**; en un par de minutos se publica sola.
 
 También funciona abriendo `index.html` con doble clic, pero así no se puede instalar como app.
 
