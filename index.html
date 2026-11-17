@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckyLab</title>
+<meta name="theme-color" content="#15131c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Barlow+Condensed:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;500;600;700&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#15131c; --panel:#1f1c29; --panel2:#282436; --line:#3a3550; --text:#ece8f5; --muted:#a39dba;
+  --duck:#ffc93c; --duck2:#ff9f1c; --danger:#ff5d5d; --ok:#4cd290; --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* Cabecera */
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:rgba(21,19,28,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:.5px;margin-right:auto;cursor:pointer;user-select:none}
+.logo span{background:linear-gradient(90deg,var(--duck),var(--duck2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn{border:1px solid var(--line);background:var(--panel2);padding:8px 13px;border-radius:10px;white-space:nowrap;transition:.15s}
+.btn:hover{border-color:#5a5378;background:#312c43}
+.btn.pri{background:linear-gradient(180deg,var(--duck),var(--duck2));color:#2a1a00;border-color:transparent;font-weight:700}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.sm{padding:5px 9px;font-size:13px;border-radius:8px}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.45;cursor:default}
+
+main{max-width:1400px;margin:0 auto;padding:16px}
+
+/* Galería */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:7px 13px}
+.seg button.on{background:var(--duck);color:#2a1a00;font-weight:700}
+.search{flex:1;min-width:160px;max-width:320px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+.tile{position:relative}
+.tile .cardbox{aspect-ratio:750/1050;perspective:1200px;cursor:pointer}
+.tile .name{margin-top:6px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;justify-content:space-between}
+.tile .name b{color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);flex:none}
+.tile .acts{position:absolute;top:8px;right:8px;display:flex;gap:5px;opacity:0;transition:.15s}
+.tile:hover .acts,.tile:focus-within .acts{opacity:1}
+@media (hover:none){.tile .acts{opacity:1}}
+.acts button{width:32px;height:32px;border-radius:9px;border:1px solid #fff3;background:#000a;color:#fff;font-size:15px;display:grid;place-items:center}
+.tile .chk{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:9px;background:#000b;border:2px solid #fff8;display:grid;place-items:center;font-weight:900;color:#2a1a00}
+.tile.sel .chk{background:var(--duck);border-color:var(--duck)}
+.tile.sel .cardbox{outline:3px solid var(--duck);outline-offset:3px;border-radius:12px}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .big{font-size:60px}
+
+/* Volteo */
+.flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.3,.7,.3,1)}
+.flip.flipped{transform:rotateY(180deg)}
+.flip>*{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:4.2%/3%;box-shadow:0 10px 30px #0008}
+.flip>.back{transform:rotateY(180deg)}
+.flip>.sheen{pointer-events:none;box-shadow:none;opacity:0;transition:opacity .4s;mix-blend-mode:screen;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 46%,rgba(255,140,240,.18) 50%,rgba(120,240,255,.22) 54%,transparent 65%);background-size:300% 300%;animation:sheen 4.5s linear infinite}
+.flip.fx-on>.sheen{opacity:1}
+@keyframes sheen{from{background-position:100% 100%}to{background-position:0% 0%}}
+.picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.picks button{background:var(--panel2);border:2px solid var(--line);border-radius:11px;padding:5px 5px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;line-height:1.2;text-align:center}
+.picks button:hover{border-color:#6a6290}
+.picks button.on{border-color:var(--duck);background:#3a3220}
+.picks canvas{width:100%;height:auto;border-radius:5px;display:block}
+.picks .addf{justify-content:center;min-height:150px;border-style:dashed;color:var(--muted)}
+.numr{display:flex;gap:8px;align-items:center}.numr input[type=color]{width:44px;height:36px;flex:none;padding:2px;border-radius:9px;border:1px solid var(--line);background:var(--panel)}.hexin{font-family:ui-monospace,Consolas,monospace;text-transform:uppercase}.hexin.bad{border-color:var(--danger)!important}.numr input[type=range]{flex:1;min-width:70px;width:auto}.numr input[type=number]{width:72px!important;flex:none;padding:5px 7px}
+#layoutBox .row{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}#layoutBox .btn{white-space:normal}
+body.tplmode #expRow,body.tplmode #panHint,body.tplmode #flipBtn{display:none}
+.bkwarn{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#3a3220;border:1px solid var(--duck);border-radius:12px;padding:10px 14px;margin-bottom:14px}.bkwarn span{flex:1;min-width:200px}
+.tplbanner{background:linear-gradient(90deg,#3a3220,#2a2436);border:1px solid var(--duck)}
+.panel.flash{outline:3px solid var(--duck);outline-offset:2px;transition:outline .3s}
+.lay{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:14px}
+.lay h4{margin:0 0 10px;font-size:14px}
+.lay .row{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+.lay input[type=color]{width:100%;height:36px;border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:2px}
+
+/* Editor */
+.editor{display:grid;grid-template-columns:minmax(300px,440px) 1fr;gap:24px;align-items:start}
+@media (max-width:860px){.editor{grid-template-columns:1fr}}
+.stage{position:sticky;top:76px}
+@media (max-width:860px){.stage{position:static}}
+.preview{width:100%;max-width:440px;aspect-ratio:750/1050;margin:0 auto;perspective:1600px}
+.preview canvas{touch-action:none}
+.preview .front{cursor:grab}
+.preview .front:active{cursor:grabbing}
+.stagebar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.hint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.panel h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+label.f.chk{flex-direction:row;align-items:center;gap:8px;color:var(--text);font-size:14px}
+.f input[type=text],.f input[type=number],.f select,.f textarea,.inp{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--text);width:100%}
+.f textarea{min-height:120px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:13.5px}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid #ffc93c66;border-color:var(--duck)}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);cursor:pointer;transition:.15s}
+.drop.over,.drop:hover{border-color:var(--duck);color:var(--text)}
+.syms{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.syms button{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:3px;width:34px;height:34px;display:grid;place-items:center}
+.syms button:hover{border-color:var(--duck)}
+.syms img{width:24px;height:24px}
+.costed{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px}
+.costhead{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.costhead small{opacity:.8}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:38px;align-items:center;margin-bottom:8px}
+.chips button{position:relative;border:1px solid var(--line);background:var(--panel);border-radius:9px;width:38px;height:38px;display:grid;place-items:center;padding:0}
+.chips button img{width:28px;height:28px}
+.chips button::after{content:'✕';position:absolute;top:-6px;right:-6px;width:17px;height:17px;border-radius:50%;background:var(--danger);color:#fff;font-size:10px;line-height:17px;text-align:center;opacity:0;transition:.15s}
+.chips button:hover{border-color:var(--danger)}.chips button:hover::after{opacity:1}
+@media (hover:none){.chips button::after{opacity:1}}
+.chips .none{font-size:13px;color:var(--muted)}
+#costPal{margin:0}
+.help{font-size:12.5px;color:var(--muted);line-height:1.55}
+.help code{background:var(--panel2);padding:1px 5px;border-radius:5px;color:var(--text)}
+input[type=range]{width:100%;accent-color:var(--duck)}
+
+/* Modal y avisos */
+.modal{position:fixed;inset:0;background:#0009;display:grid;place-items:center;z-index:50;padding:16px}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;width:min(480px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 60px #000a}
+.modal h2{margin:0 0 12px;font-size:18px}
+.modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#toast div{background:#2d2840;border:1px solid var(--line);padding:9px 16px;border-radius:10px;box-shadow:0 6px 20px #0008;animation:tin .25s}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+.busy{position:fixed;inset:0;background:#0008;z-index:70;display:grid;place-items:center;font-size:18px}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" id="goHome" title="Mis cartas">🦆 <span>DuckyLab</span><small style="font-size:11px;color:var(--muted);font-weight:600">v11</small></div>
+  <button class="btn pri" id="newMagic">+ Carta Magic</button>
+  <button class="btn pri" id="newLorcana">+ Carta Lorcana</button>
+  <button class="btn" id="cardsBtn">🃏 Mis cartas</button>
+  <button class="btn" id="tplBtn">🖼 Plantillas</button>
+  <button class="btn" id="backupBtn">💾 Copia</button>
+  <button class="btn hidden" id="installBtn">⬇ Instalar</button>
+</header>
+
+<main>
+  <!-- GALERÍA -->
+  <section id="gallery">
+    <div class="toolbar">
+      <div class="seg" id="gameFilter">
+        <button data-g="all" class="on">Todas</button><button data-g="magic">Magic</button><button data-g="lorcana">Lorcana</button>
+      </div>
+      <input class="search" id="search" placeholder="Buscar por nombre…">
+      <button class="btn" id="selMode">☑ Seleccionar</button>
+      <button class="btn hidden" id="selAll">Todas</button>
+      <button class="btn pri" id="printBtn">🖨 Imprimir</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty hidden" id="empty">
+      <div class="big">🦆</div>
+      <p><b>Aún no tienes cartas.</b><br>Crea la primera con «+ Carta Magic» o «+ Carta Lorcana».</p>
+    </div>
+  </section>
+
+  <!-- PLANTILLAS -->
+  <section id="templates" class="hidden">
+    <div class="toolbar">
+      <div class="seg" id="tplGame"><button data-g="lorcana" class="on">Lorcana</button><button data-g="magic">Magic</button></div>
+      <button class="btn pri" id="tplNew">+ Nueva plantilla</button>
+    </div>
+    <p class="help" style="margin:-4px 0 14px">Una plantilla es una imagen de marco con las posiciones de sus textos. Créala una vez, duplícala para hacer variantes y elígela en el creador de cartas, en «🎨 Estilo de arte». Si cambias una plantilla, cambian todas las cartas que la usan.</p>
+    <div class="grid" id="tplGrid"></div>
+    <div class="empty hidden" id="tplEmpty"><div class="big">🖼</div><p><b>Aún no tienes plantillas de este juego.</b><br>Pulsa «+ Nueva plantilla» y sube la imagen de un marco.</p></div>
+  </section>
+
+  <!-- EDITOR -->
+  <section id="editor" class="hidden">
+    <div class="editor">
+      <div class="stage">
+        <div class="preview"><div class="flip" id="pflip"><canvas class="front" id="cvF" width="750" height="1050"></canvas><div class="sheen" id="sheen"></div><canvas class="back" id="cvB" width="750" height="1050"></canvas></div></div>
+        <div class="hint" id="panHint">Arrastra la imagen sobre la carta para encuadrarla · usa la rueda del ratón o la barra de zoom</div>
+        <div class="stagebar">
+          <button class="btn" id="backToGallery">← Mis cartas</button>
+          <button class="btn" id="flipBtn">↻ Voltear</button>
+          <button class="btn hidden" id="posBtn">✏️ Editar plantilla</button>
+        </div>
+        <div class="stagebar" id="expRow">
+          <select class="inp" id="expSide" style="width:auto"><option value="front">Frente</option><option value="back">Dorso</option><option value="both">Frente y dorso</option></select>
+          <button class="btn" data-exp="png">PNG</button>
+          <button class="btn" data-exp="jpg">JPG</button>
+          <button class="btn" data-exp="pdf">PDF</button>
+        </div>
+      </div>
+      <div id="form"></div>
+    </div>
+  </section>
+</main>
+<footer><b>DuckyLab v11</b> · creador de cartas personal y no oficial. Las cartas se guardan en este navegador: haz una 💾 Copia de vez en cuando.<br>Magic: The Gathering © Wizards of the Coast · Disney Lorcana © Disney / Ravensburger. Marcos y dorsos de diseño propio.</footer>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Utilidades
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const W=750,H=1050;               // 63,5 × 88,9 mm a 300 ppp
+const PI=Math.PI;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg,ms=2600){const d=document.createElement('div');d.textContent=msg;$('#toast').appendChild(d);setTimeout(()=>d.remove(),ms);}
+function slug(s){return (String(s||'carta').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'carta').slice(0,50);}
+function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function hexPath(ctx,cx,cy,r,rot=0){ctx.beginPath();for(let i=0;i<6;i++){const a=rot+i*PI/3;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();}
+function shade(hex,amt){ // amt -1..1
+  let c=hex.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');
+  const n=parseInt(c,16);let r=n>>16,g=n>>8&255,b=n&255;
+  const t=amt<0?0:255,p=Math.abs(amt);
+  r=Math.round((t-r)*p+r);g=Math.round((t-g)*p+g);b=Math.round((t-b)*p+b);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function modal(html,buttons){
+  return new Promise(res=>{
+    const m=document.createElement('div');m.className='modal';
+    m.innerHTML=`<div class="box">${html}<div class="btns"></div></div>`;
+    const bx=m.querySelector('.btns');
+    buttons.forEach(b=>{const e=document.createElement('button');e.className='btn '+(b.cls||'');e.textContent=b.label;e.onclick=()=>{const v=b.value!==undefined?b.value:true;if(b.collect)res(b.collect(m));else res(v);m.remove();};bx.appendChild(e);});
+    m.addEventListener('click',e=>{if(e.target===m){res(null);m.remove();}});
+    document.body.appendChild(m);
+  });
+}
+const confirmBox=(t,ok='Sí',cls='danger')=>modal(`<h2>${t}</h2>`,[{label:'Cancelar',value:false},{label:ok,value:true,cls}]);
+function busy(on,txt='Preparando…'){let b=$('#busy');if(on){if(!b){b=document.createElement('div');b.id='busy';b.className='busy';document.body.appendChild(b);}b.textContent=txt;}else if(b)b.remove();}
+
+/* Descargas: dentro de claude.ai usa su sistema; fuera, un enlace normal */
+async function saveFile(blob,filename){
+  try{
+    if(window.claude&&typeof window.claude.use==='function'){
+      const dl=await Promise.race([window.claude.use('downloads'),new Promise(r=>setTimeout(()=>r(null),4000))]);
+      if(dl){try{await dl.save({filename,data:blob});return true;}catch(e){if(e&&e.code==='declined')return false;toast('No se pudo descargar: '+(e&&e.message||e));return false;}}
+    }
+  }catch(e){}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);return true;
+}
+
+/* ============================================================
+   Almacenamiento (IndexedDB, con respaldo en memoria)
+   ============================================================ */
+const Store={
+  db:null,mem:new Map(),
+  async open(){
+    try{
+      this.db=await new Promise((res,rej)=>{const r=indexedDB.open('duckylab',2);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('cards'))db.createObjectStore('cards',{keyPath:'id'});if(!db.objectStoreNames.contains('settings'))db.createObjectStore('settings',{keyPath:'key'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+    }catch(e){this.db=null;toast('⚠ Este navegador no deja guardar: las cartas se perderán al cerrar.',6000);}
+  },
+  tx(mode,st='cards'){return this.db.transaction(st,mode).objectStore(st);},
+  async getSet(key){
+    if(!this.db)return this.mem.get('set:'+key)??null;
+    return new Promise(res=>{const r=this.tx('readonly','settings').get(key);r.onsuccess=()=>res(r.result?r.result.val:null);r.onerror=()=>res(null);});
+  },
+  async putSet(key,val){
+    if(!this.db){this.mem.set('set:'+key,val);return;}
+    return new Promise((res,rej)=>{const r=this.tx('readwrite','settings').put({key,val});r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
+  },
+  async all(){
+    if(!this.db)return [...this.mem.entries()].filter(([k])=>!String(k).startsWith('set:')).map(([,v])=>v);
+    return new Promise((res,rej)=>{const r=this.tx('readonly').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+  },
+  async put(c){
+    const clean=JSON.parse(JSON.stringify(c,(k,v)=>k.startsWith('_')?undefined:v));
+    if(!this.db){this.mem.set(c.id,clean);return;}
+    return new Promise((res,rej)=>{const r=this.tx('readwrite').put(clean);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
+  },
+  async del(id){
+    if(!this.db){this.mem.delete(id);return;}
+    return new Promise((res,rej)=>{const r=this.tx('readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
+  }
+};
+
+/* ============================================================
+   Datos de juego
+   ============================================================ */
+/* Tipografía: «guia» sigue la guía del usuario; «duckylab» es la original */
+const TYPOS={guia:'Según tu guía',duckylab:'Clásica DuckyLab'};
+const SERIF_FB='Georgia, "Times New Roman", serif',SANS_FB='"Segoe UI", Arial, sans-serif';
+let FAM,TFAM,RFAM,NFAM,NW,VSTY,CSTY,RW,UPB;
+function setTypo(game,typo){
+  if(typo==='duckylab'||!game){FAM=`"EB Garamond", ${SERIF_FB}`;TFAM=`Cinzel, "EB Garamond", ${SERIF_FB}`;RFAM=FAM;NFAM=TFAM;NW='700';VSTY='italic 600';CSTY='600';RW='400';UPB=false;return;}
+  if(game==='magic'){ // nombre, tipo y F/R: Cormorant Garamond 600-700 · reglas: Libre Baskerville
+    FAM=`"Cormorant Garamond", ${SERIF_FB}`;TFAM=FAM;RFAM=`"Libre Baskerville", ${SERIF_FB}`;NFAM=FAM;NW='700';VSTY='italic 600';CSTY='600';RW='400';UPB=false;return;}
+  // Lorcana: nombre Barlow Condensed SemiBold en mayúsculas · subtítulo Barlow Medium · habilidades Barlow Medium con encabezado Bold en mayúsculas · clasificaciones Barlow Italic · números Barlow Medium
+  FAM=`Barlow, ${SANS_FB}`;TFAM=`"Barlow Condensed", Barlow, ${SANS_FB}`;RFAM=FAM;NFAM=FAM;NW='600';VSTY='500';CSTY='italic 600';RW='500';UPB=true;
+}
+setTypo(null);
+
+// Marcos Magic (diseño propio)
+const MFR={
+  W:{n:'Blanco',     frame:'#ddd3b4',dark:'#9c8f68',light:'#faf6e8',box:'#f6f1e2',foot:'#fff'},
+  U:{n:'Azul',       frame:'#2f75b5',dark:'#174a7a',light:'#d4e6f6',box:'#e7f0f8',foot:'#fff'},
+  B:{n:'Negro',      frame:'#46403f',dark:'#1d1918',light:'#dcd5d2',box:'#e9e4e2',foot:'#fff'},
+  R:{n:'Rojo',       frame:'#c9502f',dark:'#7f2a16',light:'#f6d8cb',box:'#f8e8e1',foot:'#fff'},
+  G:{n:'Verde',      frame:'#2f7f4c',dark:'#164a2a',light:'#d4ecd9',box:'#e6f3e8',foot:'#fff'},
+  gold:{n:'Multicolor',frame:'#cfa94a',dark:'#86671c',light:'#f6e9bf',box:'#f8f0d8',foot:'#fff'},
+  artifact:{n:'Artefacto',frame:'#8d99a3',dark:'#56616b',light:'#e4e9ec',box:'#eef1f3',foot:'#fff'},
+  colorless:{n:'Incoloro',frame:'#bdb7ae',dark:'#7d776e',light:'#efece6',box:'#f4f2ee',foot:'#fff'},
+  land:{n:'Tierra',  frame:'#8c6f4c',dark:'#54402a',light:'#ecdfcc',box:'#f3eadd',foot:'#fff'},
+};
+const MSYM={W:{bg:'#f8f1cf'},U:{bg:'#a8d4f0'},B:{bg:'#cbc2bf'},R:{bg:'#f3a083'},G:{bg:'#9dd3a7'},C:{bg:'#d9d3ce'},N:{bg:'#cfc9c4'}};
+const MRAR={comun:{n:'Común',c:['#222','#000'],l:'C'},infrecuente:{n:'Infrecuente',c:['#e8eef3','#7b8a96'],l:'U'},rara:{n:'Rara',c:['#ffe28a','#a57b12'],l:'R'},mitica:{n:'Mítica',c:['#ffb26b','#b5300f'],l:'M'}};
+
+const INKS={
+  amber:{n:'Ámbar',c:'#f2ae20'},amethyst:{n:'Amatista',c:'#7d4fa3'},emerald:{n:'Esmeralda',c:'#2b9a58'},
+  ruby:{n:'Rubí',c:'#d0303c'},sapphire:{n:'Zafiro',c:'#1f8ad0'},steel:{n:'Acero',c:'#8b98a5'}
+};
+const LTYPES={character:'Personaje',action:'Acción',song:'Acción · Canción',item:'Objeto',location:'Localización'};
+const LRAR={comun:{n:'Común',c:'#d8d8d8'},infrecuente:{n:'Infrecuente',c:'#f4f4f4'},rara:{n:'Rara',c:'#d39b5a'},superrara:{n:'Súper rara',c:'#cfd8e3'},legendaria:{n:'Legendaria',c:'#f5c542'},encantada:{n:'Encantada',c:'rainbow'}};
+
+function newCard(game){
+  const base={id:uid(),game,created:Date.now(),updated:Date.now(),img:null,art:{x:0,y:0,z:1},back:{mode:'default',img:null}};
+  if(game==='magic') base.data={name:'Pato Hechicero',cost:'{1}{U}',frame:'auto',type:'Criatura — Pato hechicero',rarity:'rara',
+    text:'Vuela.\nCuando ~ entre al campo de batalla, roba una carta.\n{T}: Gira la criatura objetivo. (No se endereza durante tu próximo paso de enderezar.)',
+    flavor:'«Cuac.»',style:'clasico',fx:'none',border:'negro',power:'1',toughness:'3',loyalty:'',artist:'',set:'DLB',number:'001'};
+  else base.data={name:'Ducky',version:'Inventor curioso',cost:'3',inkable:true,ink:'sapphire',ink2:'',ctype:'character',classes:'Soñado · Inventor',
+    text:'**IDEA BRILLANTE** Cuando juegues a este personaje, roba una carta.\n**CUAC** {E}: Gana 1 {L}.',flavor:'',style:'estandar',fx:'none',border:'negro',strength:'2',willpower:'3',lore:'2',move:'',rarity:'rara',artist:'',set:'DLB',number:'001'};
+  return base;
+}
+
+/* ============================================================
+   Símbolos
+   ============================================================ */
+function arcArrow(ctx,cx,cy,R,a0,a1,lw){
+  ctx.lineWidth=lw;ctx.lineCap='round';ctx.beginPath();ctx.arc(cx,cy,R,a0,a1);ctx.stroke();
+  const ex=cx+R*Math.cos(a1),ey=cy+R*Math.sin(a1),dir=a1+PI/2,hs=lw*1.25;
+  ctx.beginPath();ctx.moveTo(ex+Math.cos(dir)*hs*1.5,ey+Math.sin(dir)*hs*1.5);
+  ctx.lineTo(ex+Math.cos(dir+2.2)*hs*1.3,ey+Math.sin(dir+2.2)*hs*1.3);
+  ctx.lineTo(ex+Math.cos(dir-2.2)*hs*1.3,ey+Math.sin(dir-2.2)*hs*1.3);ctx.closePath();ctx.fill();
+}
+// Glifos de maná de diseño propio, en coordenadas -1..1
+function mGlyph(ctx,k,cx,cy,s,col,bg){
+  ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);ctx.fillStyle=col;ctx.strokeStyle=col;
+  if(k==='W'){ctx.beginPath();ctx.arc(0,0,.36,0,2*PI);ctx.fill();
+    for(let i=0;i<8;i++){const a=i*PI/4,l=i%2?.78:.95;ctx.beginPath();ctx.moveTo(Math.cos(a-.17)*.46,Math.sin(a-.17)*.46);ctx.lineTo(Math.cos(a)*l,Math.sin(a)*l);ctx.lineTo(Math.cos(a+.17)*.46,Math.sin(a+.17)*.46);ctx.fill();}}
+  else if(k==='U'){ctx.beginPath();ctx.moveTo(0,-.95);ctx.bezierCurveTo(.22,-.5,.6,-.12,.6,.3);ctx.arc(0,.3,.6,0,PI);ctx.bezierCurveTo(-.6,-.12,-.22,-.5,0,-.95);ctx.fill();
+    ctx.fillStyle=bg;ctx.beginPath();ctx.ellipse(-.25,.3,.1,.22,.3,0,2*PI);ctx.fill();}
+  else if(k==='B'){ctx.beginPath();ctx.ellipse(0,-.18,.68,.62,0,0,2*PI);ctx.fill();rr(ctx,-.4,.2,.8,.6,.12);ctx.fill();
+    ctx.fillStyle=bg;ctx.beginPath();ctx.arc(-.27,-.12,.19,0,2*PI);ctx.arc(.27,-.12,.19,0,2*PI);ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,.06);ctx.lineTo(.1,.26);ctx.lineTo(-.1,.26);ctx.fill();
+    ctx.fillRect(-.14,.48,.07,.32);ctx.fillRect(.07,.48,.07,.32);}
+  else if(k==='R'){ctx.beginPath();ctx.moveTo(.05,-1);ctx.bezierCurveTo(.2,-.55,.72,-.35,.66,.25);ctx.bezierCurveTo(.62,.72,.25,.95,0,.95);
+    ctx.bezierCurveTo(-.3,.95,-.66,.72,-.66,.3);ctx.bezierCurveTo(-.66,-.02,-.42,-.22,-.34,-.5);ctx.bezierCurveTo(-.15,-.25,-.08,-.55,.05,-1);ctx.fill();
+    ctx.fillStyle=bg;ctx.beginPath();ctx.moveTo(0,-.05);ctx.bezierCurveTo(.15,.2,.32,.35,.3,.55);ctx.bezierCurveTo(.28,.75,.12,.8,0,.8);ctx.bezierCurveTo(-.15,.8,-.3,.7,-.28,.5);ctx.bezierCurveTo(-.26,.3,-.08,.2,0,-.05);ctx.fill();}
+  else if(k==='G'){ctx.beginPath();ctx.arc(0,-.42,.42,0,2*PI);ctx.arc(-.42,-.08,.34,0,2*PI);ctx.arc(.42,-.08,.34,0,2*PI);ctx.arc(0,-.05,.38,0,2*PI);ctx.fill();
+    ctx.beginPath();ctx.moveTo(-.12,.15);ctx.lineTo(.12,.15);ctx.lineTo(.18,.85);ctx.lineTo(-.18,.85);ctx.fill();}
+  else if(k==='C'){ctx.lineWidth=.16;ctx.beginPath();ctx.moveTo(0,-.78);ctx.lineTo(.58,0);ctx.lineTo(0,.78);ctx.lineTo(-.58,0);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.arc(0,0,.16,0,2*PI);ctx.fill();}
+  else if(k==='T'){arcArrow(ctx,.05,.05,.55,PI*.85,PI*2.25,.2);}
+  else if(k==='Q'){ctx.scale(-1,1);arcArrow(ctx,.05,.05,.55,PI*.85,PI*2.25,.2);}
+  else if(k==='P'){ctx.lineWidth=.17;ctx.beginPath();ctx.ellipse(0,0,.5,.38,0,0,2*PI);ctx.stroke();ctx.fillRect(-.08,-.85,.16,1.7);}
+  else if(k==='S'){ // nieve
+    ctx.lineWidth=.13;ctx.lineCap='round';for(let i=0;i<3;i++){ctx.save();ctx.rotate(i*PI/3);ctx.beginPath();ctx.moveTo(0,-.8);ctx.lineTo(0,.8);ctx.moveTo(-.2,-.6);ctx.lineTo(0,-.42);ctx.lineTo(.2,-.6);ctx.moveTo(-.2,.6);ctx.lineTo(0,.42);ctx.lineTo(.2,.6);ctx.stroke();ctx.restore();}}
+  else if(k==='E'){ctx.beginPath();ctx.moveTo(.15,-.9);ctx.lineTo(-.45,.1);ctx.lineTo(-.02,.1);ctx.lineTo(-.18,.9);ctx.lineTo(.45,-.15);ctx.lineTo(.02,-.15);ctx.closePath();ctx.fill();}
+  else {const t=k.length>2?k.slice(0,2):k;ctx.font=`700 ${t.length>1?1.05:1.35}px ${FAM}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,0,.1);}
+  ctx.restore();
+}
+function drawManaSym(ctx,code,cx,cy,d){
+  const r=d/2,C=code.toUpperCase().replace(/\s/g,'');
+  ctx.save();
+  ctx.fillStyle='#0008';ctx.beginPath();ctx.arc(cx-r*.09,cy+r*.11,r,0,2*PI);ctx.fill();
+  const parts=C.split('/');
+  const bgOf=k=>(MSYM[k]||MSYM.N).bg;
+  if(parts.length===2&&parts[1]!=='P'){
+    const [a,b]=parts;
+    ctx.fillStyle=bgOf(a);ctx.beginPath();ctx.arc(cx,cy,r,PI*.75,PI*1.75);ctx.closePath();ctx.fill();
+    ctx.fillStyle=bgOf(b);ctx.beginPath();ctx.arc(cx,cy,r,-PI*.25,PI*.75);ctx.closePath();ctx.fill();
+    mGlyph(ctx,a,cx-r*.33,cy-r*.33,r*.42,'#141414',bgOf(a));
+    mGlyph(ctx,b,cx+r*.33,cy+r*.33,r*.42,'#141414',bgOf(b));
+  }else{
+    const k=parts[0],phy=parts[1]==='P';
+    const bg=k==='Q'?'#2a2a2a':(k==='T'?'#cfc9c4':bgOf(k));
+    const g=ctx.createRadialGradient(cx-r*.3,cy-r*.3,r*.1,cx,cy,r);g.addColorStop(0,shade(bg,.35));g.addColorStop(1,bg);
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,2*PI);ctx.fill();
+    mGlyph(ctx,phy?'P':k,cx,cy,r*.66,k==='Q'?'#f2f2f2':'#141414',bg);
+  }
+  ctx.restore();
+}
+// Símbolos de texto de Lorcana (diseño propio, sin círculo)
+function lGlyph(ctx,k,cx,cy,d,col){
+  const s=d/2;ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);ctx.fillStyle=col;ctx.strokeStyle=col;
+  if(k==='E'){arcArrow(ctx,0,.05,.6,PI*.8,PI*2.2,.24);}
+  else if(k==='I'){ctx.lineWidth=.16;hexPath(ctx,0,0,.85,PI/6);ctx.stroke();ctx.beginPath();ctx.moveTo(0,-.5);ctx.bezierCurveTo(.15,-.2,.35,0,.35,.18);ctx.arc(0,.18,.35,0,PI);ctx.bezierCurveTo(-.35,0,-.15,-.2,0,-.5);ctx.fill();}
+  else if(k==='S'){ctx.beginPath();ctx.moveTo(0,-1);ctx.lineTo(.16,-.75);ctx.lineTo(.12,.3);ctx.lineTo(-.12,.3);ctx.lineTo(-.16,-.75);ctx.closePath();ctx.fill();
+    rr(ctx,-.5,.3,1,.16,.08);ctx.fill();ctx.fillRect(-.09,.46,.18,.36);ctx.beginPath();ctx.arc(0,.9,.13,0,2*PI);ctx.fill();}
+  else if(k==='W'){ctx.beginPath();ctx.moveTo(0,-.95);ctx.lineTo(.75,-.65);ctx.bezierCurveTo(.75,.1,.45,.65,0,.95);ctx.bezierCurveTo(-.45,.65,-.75,.1,-.75,-.65);ctx.closePath();ctx.fill();}
+  else if(k==='L'){ctx.beginPath();ctx.moveTo(0,-.95);ctx.lineTo(.62,0);ctx.lineTo(0,.95);ctx.lineTo(-.62,0);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ffffff66';ctx.beginPath();ctx.moveTo(0,-.6);ctx.lineTo(.3,0);ctx.lineTo(0,0);ctx.closePath();ctx.fill();}
+  else {ctx.font=`700 1.5px ${FAM}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(k.slice(0,3),0,.08);}
+  ctx.restore();
+}
+function drawSym(ctx,game,code,cx,cy,d,col){if(game==='lorcana')lGlyph(ctx,code.toUpperCase(),cx,cy,d,col);else drawManaSym(ctx,code,cx,cy,d);}
+
+/* ============================================================
+   Texto enriquecido: {X} símbolos, **negrita**, *cursiva*, ~ nombre,
+   (paréntesis) en cursiva
+   ============================================================ */
+function parsePara(p,name,baseItal){
+  p=p.replace(/~|CARDNAME|NOMBRECARTA/g,name||'esta carta');
+  const units=[];let cur=[],bold=false,ital=false,paren=0,buf='',bst=null;
+  const st=()=>({b:bold,i:baseItal?!(ital):(ital||paren>0)});
+  const flush=()=>{if(buf){cur.push({t:'txt',s:buf,b:bst.b,i:bst.i});buf='';}};
+  const push=c=>{const s=st();if(buf&&(s.b!==bst.b||s.i!==bst.i))flush();if(!buf)bst=s;buf+=c;};
+  for(let i=0;i<p.length;i++){
+    const c=p[i];
+    if(c==='{'){const j=p.indexOf('}',i);if(j>i+1){flush();cur.push({t:'sym',s:p.slice(i+1,j).trim()});i=j;continue;}}
+    if(c==='*'){flush();if(p[i+1]==='*'){bold=!bold;i++;}else ital=!ital;continue;}
+    if(c===' '||c==='\t'){flush();if(cur.length){units.push(cur);cur=[];}continue;}
+    if(c==='('){paren++;push(c);continue;}
+    if(c===')'){push(c);paren=Math.max(0,paren-1);continue;}
+    push(c);
+  }
+  flush();if(cur.length)units.push(cur);
+  return units;
+}
+const fontOf=(p,fs,fam)=>`${p.i?'italic ':''}${p.b?'700':RW} ${fs}px ${fam}`;
+function pieceW(ctx,p,fs,fam){if(p.t==='sym')return fs*1.0;ctx.font=fontOf(p,fs,fam);return ctx.measureText(UPB&&p.b?p.s.toUpperCase():p.s).width;}
+function layout(ctx,paras,maxW,fs,fam){
+  ctx.font=fontOf({},fs,fam);const sp=ctx.measureText(' ').width;const lines=[];
+  paras.forEach(units=>{
+    let line={items:[],w:0};
+    units.forEach(u=>{
+      const uw=u.reduce((a,p)=>a+pieceW(ctx,p,fs,fam),0);
+      if(line.items.length&&line.w+sp+uw>maxW){lines.push(line);line={items:[],w:0};}
+      line.w+=(line.items.length?sp:0)+uw;line.items.push({u,gap:line.items.length?sp:0});
+    });
+    line.last=true;lines.push(line);
+  });
+  return lines;
+}
+function blockH(lines,fs){let h=0;lines.forEach((l,i)=>{h+=fs*1.17;if(l.last&&i<lines.length-1)h+=fs*.38;});return h;}
+/* Encaja reglas + ambientación en una caja reduciendo la letra si hace falta */
+function drawTextBox(ctx,o){
+  const {x,y,w,h,rules,flavor,name,game,fam=RFAM,max=34,min=14,col='#141414',sepCol='#0005'}=o;
+  const rp=(rules||'').split('\n').map(p=>parsePara(p,name,false));
+  const fp=(flavor||'').trim()?flavor.split('\n').map(p=>parsePara(p,name,true)):[];
+  let fs=max,rl,fl,total;
+  for(;fs>=min;fs-=1){
+    rl=(rules||'').trim()?layout(ctx,rp,w,fs,fam):[];fl=fp.length?layout(ctx,fp,w,fs,fam):[];
+    total=blockH(rl,fs)+(fl.length?(rl.length?fs*.9:0)+blockH(fl,fs):0);
+    if(total<=h)break;
+  }
+  fs=Math.max(fs,min);
+  let cy=y+Math.max(0,(h-total)/2);
+  const drawLines=lines=>{
+    lines.forEach((l,i)=>{
+      const base=cy+fs*.88;let cx=x;
+      l.items.forEach(it=>{cx+=it.gap;it.u.forEach(p=>{
+        if(p.t==='sym'){drawSym(ctx,game,p.s,cx+fs*.5,base-fs*.31,fs*.9,col);cx+=fs;}
+        else{ctx.font=fontOf(p,fs,fam);ctx.fillStyle=col;const tx=UPB&&p.b?p.s.toUpperCase():p.s;ctx.fillText(tx,cx,base);cx+=ctx.measureText(tx).width;}
+      });});
+      cy+=fs*1.17;if(l.last&&i<lines.length-1)cy+=fs*.38;
+    });
+  };
+  ctx.save();ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  drawLines(rl);
+  if(fl.length){
+    if(rl.length){const sy=cy+fs*.42;const g=ctx.createLinearGradient(x,0,x+w,0);g.addColorStop(0,'transparent');g.addColorStop(.5,sepCol);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(x+w*.1,sy,w*.8,2);cy+=fs*.9;}
+    drawLines(fl);
+  }
+  ctx.restore();
+}
+function fitText(ctx,text,maxW,font,startPx,minPx){let px=startPx;for(;px>minPx;px--){ctx.font=font(px);if(ctx.measureText(text).width<=maxW)break;}ctx.font=font(px);return px;}
+
+/* ============================================================
+   Imagen
+   ============================================================ */
+function loadImage(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
+async function imgOf(card,key){ // key 'img' o 'back'
+  const src=key==='back'?(card.back&&card.back.mode==='mine'?HOUSE[card.game]:card.back&&card.back.mode==='custom'?card.back.img:null):card.img;
+  if(!src)return null;
+  const slot='_'+key;
+  if(card[slot]&&card[slot].src===src)return card[slot].el;
+  try{const el=await loadImage(src);card[slot]={src,el};return el;}catch(e){return null;}
+}
+async function fileToDataURL(file,max=1700){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await loadImage(url);
+    const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',.9);
+  }finally{URL.revokeObjectURL(url);}
+}
+function drawCover(ctx,img,R,art){
+  const z=art&&art.z||1;const s=Math.max(R.w/img.naturalWidth,R.h/img.naturalHeight)*z;
+  const dw=img.naturalWidth*s,dh=img.naturalHeight*s;
+  const dx=R.x+(R.w-dw)/2+(art&&art.x||0)*R.w,dy=R.y+(R.h-dh)/2+(art&&art.y||0)*R.h;
+  ctx.drawImage(img,dx,dy,dw,dh);
+}
+function placeholder(ctx,R,dark){
+  const g=ctx.createLinearGradient(R.x,R.y,R.x+R.w,R.y+R.h);g.addColorStop(0,dark?'#2c2840':'#cfd6dd');g.addColorStop(1,dark?'#4b4366':'#9fb1c2');
+  ctx.fillStyle=g;ctx.fillRect(R.x,R.y,R.w,R.h);
+  ctx.save();ctx.globalAlpha=.5;ctx.fillStyle=dark?'#fff':'#233';ctx.textAlign='center';
+  ctx.font=`600 34px ${FAM}`;ctx.fillText('Sube o arrastra una imagen',R.x+R.w/2,R.y+R.h/2+10);
+  ctx.font=`80px ${FAM}`;ctx.fillText('🦆',R.x+R.w/2,R.y+R.h/2-50);ctx.restore();
+}
+
+/* ============================================================
+   Bordes, estilos de arte y efectos
+   ============================================================ */
+const BORDERS={negro:{n:'Negro',c:'#0c0b0d',t:'#fff'},blanco:{n:'Blanco',c:'#f3f1ec',t:'#222'},plata:{n:'Plateado',c:['#f4f6f8','#9aa3ad','#e3e7eb','#7d868f'],t:'#111'},oro:{n:'Dorado',c:['#fff1b8','#c9971f','#f5d77a','#8a6114'],t:'#2a1a00'}};
+function fillBorder(ctx,b){
+  const B=BORDERS[b]||BORDERS.negro;
+  if(Array.isArray(B.c)){const g=ctx.createLinearGradient(0,0,W,H);B.c.forEach((c,i,a)=>g.addColorStop(i/(a.length-1),c));ctx.fillStyle=g;}else ctx.fillStyle=B.c;
+  ctx.fillRect(0,0,W,H);return B.t;
+}
+const MSTYLE={
+  clasico:  {n:'Clásico',            art:{x:62,y:120,w:626,h:456}},
+  extendido:{n:'Arte extendido',     art:{x:0,y:120,w:750,h:456}},
+  sinbordes:{n:'Sin bordes',         art:{x:0,y:0,w:750,h:1050}},
+  fullart:  {n:'Arte completo',      art:{x:22,y:22,w:706,h:1006}},
+  vitrina:  {n:'Vitrina ornamental', art:{x:62,y:112,w:626,h:464}},
+  antiguo:  {n:'Antiguo',            art:{x:80,y:106,w:590,h:434}},
+  puro:     {n:'Solo arte',          art:{x:22,y:22,w:706,h:1006}},
+};
+const LSTYLE={
+  estandar: {n:'Estándar',      art:{x:18,y:18,w:714,h:700}},
+  arte:     {n:'Arte completo', art:{x:18,y:18,w:714,h:1014}},
+  encantada:{n:'Encantada',     art:{x:18,y:18,w:714,h:1014}},
+  sinmarco: {n:'Sin marco',     art:{x:0,y:0,w:750,h:1050}},
+  puro:     {n:'Solo arte',     art:{x:18,y:18,w:714,h:1014}},
+};
+const FX={none:'Sin efecto',foil:'Foil arcoíris',grabado:'Grabado metálico',purpurina:'Purpurina',holo:'Holográfico',galaxia:'Galaxia'};
+function styleOf(c){const d=c.data;if(frameOf(c))return 'frame';return c.game==='magic'?(MSTYLE[d.style]?d.style:'clasico'):(LSTYLE[d.style]?d.style:'estandar');}
+function artRect(c){const F=frameOf(c);if(F)return F.layout.art;return (c.game==='magic'?MSTYLE:LSTYLE)[styleOf(c)].art;}
+function lum(hex){const n=parseInt(hex.slice(1),16);return ((n>>16)*.299+(n>>8&255)*.587+(n&255)*.114)/255;}
+
+function applyFx(ctx,fx){
+  if(!fx||fx==='none'||!FX[fx])return;
+  ctx.save();
+  if(fx==='foil'){
+    let g=ctx.createLinearGradient(0,0,W,H);['#ff5e7e','#ffd35e','#7dff8a','#5ed8ff','#a97dff','#ff5ec4'].forEach((c,i,a)=>g.addColorStop(i/(a.length-1),c));
+    ctx.globalCompositeOperation='overlay';ctx.globalAlpha=.42;ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    g=ctx.createLinearGradient(0,H*.15,W,H*.7);g.addColorStop(0,'transparent');g.addColorStop(.45,'transparent');g.addColorStop(.5,'#fff');g.addColorStop(.55,'transparent');g.addColorStop(1,'transparent');
+    ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.8;ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  }else if(fx==='grabado'){
+    ctx.globalCompositeOperation='overlay';ctx.globalAlpha=.22;ctx.strokeStyle='#fff';ctx.lineWidth=1.2;
+    for(let i=-H;i<W;i+=5){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke();}
+    const g=ctx.createLinearGradient(0,0,W,H);['#ffffff','#8d96a0','#f1f4f7','#6d7680','#ffffff'].forEach((c,i,a)=>g.addColorStop(i/(a.length-1),c));
+    ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.7;ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  }else if(fx==='purpurina'){
+    const R=rnd(7);ctx.globalCompositeOperation='screen';
+    for(let i=0;i<1400;i++){const x=R()*W,y=R()*H,s=R()*1.8+.3;ctx.globalAlpha=R()*.7;ctx.fillStyle=`hsl(${R()*360},90%,${70+R()*30}%)`;ctx.fillRect(x,y,s,s);}
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.4;
+    for(let i=0;i<40;i++){const x=R()*W,y=R()*H,s=R()*9+4;ctx.globalAlpha=.5+R()*.5;ctx.beginPath();ctx.moveTo(x-s,y);ctx.lineTo(x+s,y);ctx.moveTo(x,y-s);ctx.lineTo(x,y+s);ctx.stroke();}
+  }else if(fx==='holo'){
+    ctx.globalCompositeOperation='color-dodge';ctx.globalAlpha=.16;ctx.lineWidth=9;
+    for(let r=10;r<1300;r+=12){ctx.strokeStyle=`hsl(${(r*2.2)%360},100%,60%)`;ctx.beginPath();ctx.arc(-120,H+120,r,0,2*PI);ctx.stroke();}
+    const g=ctx.createLinearGradient(0,0,W,0);g.addColorStop(0,'transparent');g.addColorStop(.5,'#fff');g.addColorStop(1,'transparent');
+    ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.4;ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  }else if(fx==='galaxia'){
+    ctx.globalCompositeOperation='screen';
+    for(const [x,y,r,c] of [[180,260,420,'#6b3cff'],[600,760,460,'#ff3ca8'],[520,180,300,'#3cc8ff']]){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,c);g.addColorStop(1,'transparent');ctx.globalAlpha=.32;ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+    const R=rnd(99);ctx.fillStyle='#fff';
+    for(let i=0;i<260;i++){ctx.globalAlpha=.3+R()*.7;ctx.beginPath();ctx.arc(R()*W,R()*H,R()*1.8+.3,0,2*PI);ctx.fill();}
+  }
+  ctx.restore();
+}
+
+/* ============================================================
+   Render: Magic (marcos de diseño propio)
+   ============================================================ */
+const GP={n:'Oro',frame:'#c9a64a',dark:'#7a5a14',light:'#f6e6b0',box:'#fbf3dc'};
+function autoFrame(d){
+  const cols=new Set();(String(d.cost||'').match(/\{[^}]+\}/g)||[]).forEach(m=>m.slice(1,-1).toUpperCase().split('/').forEach(ch=>{if('WUBRG'.includes(ch)&&ch)cols.add(ch);}));
+  if(cols.size===1)return [...cols][0];if(cols.size>1)return 'gold';
+  if(/artefacto|artifact/i.test(d.type||''))return 'artifact';
+  if(/tierra|land/i.test(d.type||''))return 'land';
+  return 'colorless';
+}
+function parseSyms(s){return (String(s||'').match(/\{[^}]+\}/g)||[]).map(m=>m.slice(1,-1));}
+function bar(ctx,P,x,y,w,h){
+  ctx.save();ctx.shadowColor='#0007';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
+  rr(ctx,x,y,w,h,13);const g=ctx.createLinearGradient(0,y,0,y+h);g.addColorStop(0,shade(P.light,.4));g.addColorStop(.55,P.light);g.addColorStop(1,shade(P.light,-.12));
+  ctx.fillStyle=g;ctx.fill();ctx.restore();
+  ctx.lineWidth=3;ctx.strokeStyle=P.dark;rr(ctx,x,y,w,h,13);ctx.stroke();
+  ctx.lineWidth=1.5;ctx.strokeStyle='#ffffff99';rr(ctx,x+4,y+4,w-8,h-8,10);ctx.stroke();
+}
+function glass(ctx,x,y,w,h,r,a=.55){
+  ctx.save();ctx.shadowColor='#0008';ctx.shadowBlur=12;rr(ctx,x,y,w,h,r);ctx.fillStyle=`rgba(12,11,18,${a})`;ctx.fill();ctx.restore();
+  ctx.lineWidth=2;ctx.strokeStyle='rgba(255,255,255,.38)';rr(ctx,x,y,w,h,r);ctx.stroke();
+}
+function mRarityGem(ctx,cx,cy,s,rar){
+  const R=MRAR[rar]||MRAR.comun;ctx.save();
+  ctx.beginPath();ctx.moveTo(cx,cy-s*.55);ctx.lineTo(cx+s*.45,cy-s*.3);ctx.quadraticCurveTo(cx+s*.42,cy+s*.3,cx,cy+s*.58);ctx.quadraticCurveTo(cx-s*.42,cy+s*.3,cx-s*.45,cy-s*.3);ctx.closePath();
+  const g=ctx.createLinearGradient(cx,cy-s/2,cx,cy+s/2);g.addColorStop(0,R.c[0]);g.addColorStop(1,R.c[1]);
+  ctx.fillStyle=g;ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=rar==='comun'?'#ddd':'#111';ctx.stroke();
+  ctx.fillStyle=rar==='comun'?'#eee':'#111a';ctx.beginPath();ctx.arc(cx+s*.02,cy-s*.08,s*.14,0,2*PI);ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx+s*.14,cy-s*.1);ctx.lineTo(cx+s*.3,cy-s*.05);ctx.lineTo(cx+s*.14,cy);ctx.fill();
+  ctx.beginPath();ctx.ellipse(cx-s*.02,cy+s*.18,s*.22,s*.13,0,0,2*PI);ctx.fill();
+  ctx.restore();
+}
+function mFrame(ctx,P,x,y,w,h,r,mottled){
+  rr(ctx,x,y,w,h,r);const g=ctx.createLinearGradient(0,y,0,y+h);g.addColorStop(0,shade(P.frame,.18));g.addColorStop(.5,P.frame);g.addColorStop(1,shade(P.frame,-.18));ctx.fillStyle=g;ctx.fill();
+  ctx.save();rr(ctx,x,y,w,h,r);ctx.clip();
+  if(mottled){const R=rnd(3);for(let i=0;i<2600;i++){ctx.globalAlpha=R()*.12;ctx.fillStyle=R()>.5?'#000':'#fff';ctx.beginPath();ctx.arc(R()*W,R()*H,R()*7+1,0,2*PI);ctx.fill();}}
+  else{ctx.globalAlpha=.08;ctx.strokeStyle='#000';ctx.lineWidth=1.2;for(let i=-1000;i<1000;i+=7){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+1050,1050);ctx.stroke();}}
+  ctx.globalAlpha=.12;const rg=ctx.createRadialGradient(375,400,100,375,500,700);rg.addColorStop(0,'#fff');rg.addColorStop(1,'transparent');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);ctx.restore();
+}
+function mArt(ctx,c,art,R,clip){
+  ctx.save();if(clip)clip();else{ctx.beginPath();ctx.rect(R.x,R.y,R.w,R.h);}ctx.clip();
+  if(art)drawCover(ctx,art,R,c.art);else placeholder(ctx,R,false);ctx.restore();
+}
+function mName(ctx,d,x,y,w,h,col,shadow){
+  const syms=parseSyms(d.cost),sd=Math.min(38,h*.62),cw=syms.length*(sd+4);
+  syms.forEach((s,i)=>drawManaSym(ctx,s,x+w-18-sd/2-(syms.length-1-i)*(sd+4),y+h/2,sd));
+  ctx.save();if(shadow){ctx.shadowColor='#000';ctx.shadowBlur=6;}
+  ctx.fillStyle=col;ctx.textBaseline='middle';ctx.textAlign='left';
+  fitText(ctx,d.name||'',w-40-cw-14,px=>`700 ${px}px ${FAM}`,Math.min(38,h*.6),16);ctx.fillText(d.name||'',x+20,y+h/2+2);ctx.restore();
+}
+function mType(ctx,d,x,y,w,h,col,shadow){
+  ctx.save();if(shadow){ctx.shadowColor='#000';ctx.shadowBlur=6;}
+  fitText(ctx,d.type||'',w-40-56,px=>`600 ${px}px ${FAM}`,Math.min(32,h*.56),14);ctx.fillStyle=col;ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(d.type||'',x+20,y+h/2+1);ctx.restore();
+  mRarityGem(ctx,x+w-32,y+h/2,Math.min(40,h*.72),d.rarity);
+}
+function mBox(ctx,P,x,y,w,h,alpha=1,stroke){
+  ctx.save();ctx.globalAlpha=alpha;ctx.shadowColor='#0006';ctx.shadowBlur=6;rr(ctx,x,y,w,h,6);
+  const g=ctx.createLinearGradient(0,y,0,y+h);g.addColorStop(0,shade(P.box,.35));g.addColorStop(1,P.box);ctx.fillStyle=g;ctx.fill();ctx.restore();
+  ctx.lineWidth=3;ctx.strokeStyle=stroke||P.dark;rr(ctx,x,y,w,h,6);ctx.stroke();
+}
+const hasStats=d=>!!(d.loyalty||d.power||d.toughness);
+function mText(ctx,d,x,y,w,h,col){drawTextBox(ctx,{x,y,w,h,rules:d.text,flavor:d.flavor,name:d.name,game:'magic',max:33,min:14,col,sepCol:col==='#fff'?'#fff9':'#0005'});}
+function mStats(ctx,P,d,x,y,mode){ // caja 144x62 en x,y
+  if(d.loyalty){
+    const cx=x+80,cy=y+26;ctx.save();ctx.beginPath();ctx.moveTo(cx-48,cy-36);ctx.lineTo(cx+48,cy-36);ctx.lineTo(cx+48,cy+6);ctx.quadraticCurveTo(cx+40,cy+30,cx,cy+44);ctx.quadraticCurveTo(cx-40,cy+30,cx-48,cy+6);ctx.closePath();
+    ctx.fillStyle='#1b1b1f';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=shade(P.frame,.3);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 40px ${FAM}`;ctx.fillText(d.loyalty,cx,cy+2);ctx.restore();
+  }else if(d.power||d.toughness){
+    const t=`${d.power||0}/${d.toughness||0}`;let col='#111';
+    if(mode==='glass'){glass(ctx,x,y,144,62,13,.6);col='#fff';}else if(mode==='plain'){col=null;}else bar(ctx,P,x,y,144,62);
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';fitText(ctx,t,120,px=>`700 ${px}px ${FAM}`,mode==='plain'?48:42,20);
+    if(!col){ctx.shadowColor='#000';ctx.shadowBlur=6;col=lum(P.frame)>.6?'#111':'#fff';ctx.shadowColor=col==='#fff'?'#000':'#fff';}
+    ctx.fillStyle=col;ctx.fillText(t,x+72,y+33);ctx.restore();
+  }
+}
+function mFooter(ctx,d,col,y=1002,shadow){
+  ctx.save();if(shadow){ctx.shadowColor='#000';ctx.shadowBlur=5;}
+  ctx.textBaseline='alphabetic';ctx.textAlign='left';ctx.fillStyle=col;
+  const rl=(MRAR[d.rarity]||MRAR.comun).l;
+  ctx.font=`600 19px ${FAM}`;ctx.fillText(`${(d.number||'').trim()} ${rl} · ${(d.set||'').trim().toUpperCase()}`.trim(),50,y);
+  ctx.font=`italic 400 19px ${FAM}`;ctx.fillText(d.artist?'Ilus. '+d.artist:'',50,y+22);
+  ctx.textAlign='right';ctx.font=`400 15px ${FAM}`;ctx.globalAlpha=.75;ctx.fillText('DuckyLab · carta no oficial',704,y+18);ctx.restore();
+}
+function cornerOrn(ctx,x,y,sx,sy,stroke){
+  ctx.save();ctx.translate(x,y);ctx.scale(sx,sy);ctx.strokeStyle=stroke;ctx.fillStyle=stroke;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(0,70);ctx.quadraticCurveTo(0,0,70,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(10,46);ctx.quadraticCurveTo(14,14,46,10);ctx.stroke();
+  ctx.beginPath();ctx.arc(22,22,7,0,2*PI);ctx.fill();
+  ctx.beginPath();ctx.arc(76,3,4,0,2*PI);ctx.arc(3,76,4,0,2*PI);ctx.fill();ctx.restore();
+}
+function renderMagic(ctx,c,art){
+  const d=c.data,st=styleOf(c),R=MSTYLE[st].art,fk=d.frame==='auto'||!MFR[d.frame]?autoFrame(d):d.frame,P=MFR[fk];
+  const st_=hasStats(d);
+  if(st==='clasico'||st==='extendido'){
+    const tc=fillBorder(ctx,d.border);
+    mFrame(ctx,P,30,30,690,946,20);
+    mArt(ctx,c,art,R);ctx.lineWidth=4;ctx.strokeStyle=P.dark;
+    if(st==='clasico')ctx.strokeRect(R.x,R.y,R.w,R.h);else{ctx.beginPath();ctx.moveTo(0,R.y);ctx.lineTo(W,R.y);ctx.moveTo(0,R.y+R.h);ctx.lineTo(W,R.y+R.h);ctx.stroke();}
+    bar(ctx,P,46,48,658,64);mName(ctx,d,46,48,658,64,'#111');
+    bar(ctx,P,46,580,658,60);mType(ctx,d,46,580,658,60,'#111');
+    mBox(ctx,P,62,646,626,308);mText(ctx,d,84,660,582,st_?262:282,'#141414');
+    mStats(ctx,P,d,560,922);mFooter(ctx,d,tc);
+  }else if(st==='sinbordes'){
+    mArt(ctx,c,art,R);
+    const g=ctx.createLinearGradient(0,940,0,H);g.addColorStop(0,'transparent');g.addColorStop(1,'#000d');ctx.fillStyle=g;ctx.fillRect(0,900,W,150);
+    bar(ctx,P,30,36,690,64);mName(ctx,d,30,36,690,64,'#111');
+    bar(ctx,P,30,582,690,58);mType(ctx,d,30,582,690,58,'#111');
+    mBox(ctx,P,44,648,662,302,.9);mText(ctx,d,66,662,618,st_?262:280,'#141414');
+    mStats(ctx,P,d,572,920);mFooter(ctx,d,'#fff',1004,true);
+  }else if(st==='fullart'){
+    const tc=fillBorder(ctx,d.border);
+    mArt(ctx,c,art,R,()=>rr(ctx,22,22,706,1006,24));
+    glass(ctx,40,40,670,64,16);mName(ctx,d,40,40,670,64,'#fff',true);
+    glass(ctx,40,688,670,54,14);mType(ctx,d,40,688,670,54,'#fff',true);
+    glass(ctx,40,752,670,216,14,.5);mText(ctx,d,62,764,626,st_?176:192,'#fff');
+    mStats(ctx,P,d,560,928,'glass');mFooter(ctx,d,'#fff',994,true);
+  }else if(st==='vitrina'){
+    const tc=fillBorder(ctx,d.border);
+    rr(ctx,30,30,690,946,20);let g=ctx.createLinearGradient(0,30,0,976);g.addColorStop(0,shade(P.frame,-.35));g.addColorStop(1,'#0d0a07');ctx.fillStyle=g;ctx.fill();
+    const gold=goldGrad(ctx,0,0,W,H);
+    ctx.lineWidth=3;ctx.strokeStyle=gold;rr(ctx,40,40,670,926,14);ctx.stroke();
+    [[40,40,1,1],[710,40,-1,1],[40,966,1,-1],[710,966,-1,-1]].forEach(a=>cornerOrn(ctx,a[0],a[1],a[2],a[3],gold));
+    const arch=()=>{ctx.beginPath();ctx.moveTo(R.x,R.y+R.h);ctx.lineTo(R.x,R.y+170);ctx.arcTo(R.x,R.y,R.x+R.w/2,R.y,240);ctx.arcTo(R.x+R.w,R.y,R.x+R.w,R.y+R.h,240);ctx.lineTo(R.x+R.w,R.y+R.h);ctx.closePath();};
+    mArt(ctx,c,art,R,arch);ctx.lineWidth=6;ctx.strokeStyle=gold;arch();ctx.stroke();
+    bar(ctx,GP,46,44,658,62);mName(ctx,d,46,44,658,62,'#2a1a00');
+    bar(ctx,GP,46,582,658,58);mType(ctx,d,46,582,658,58,'#2a1a00');
+    mBox(ctx,GP,62,648,626,306,1,'#7a5a14');mText(ctx,d,84,662,582,st_?260:280,'#2a1a00');
+    mStats(ctx,GP,d,560,922);mFooter(ctx,d,tc);
+  }else if(st==='antiguo'){
+    const tc=fillBorder(ctx,d.border);
+    mFrame(ctx,P,26,26,698,1000,12,true);
+    const col=lum(P.frame)>.55?'#1a1410':'#fff';
+    mName(ctx,d,40,36,670,62,col,col==='#fff');
+    // marco biselado del arte
+    ctx.fillStyle='#0008';ctx.fillRect(R.x-10,R.y-10,R.w+20,R.h+20);ctx.fillStyle='#fff3';ctx.fillRect(R.x-10,R.y-10,R.w+20,4);ctx.fillRect(R.x-10,R.y-10,4,R.h+20);
+    mArt(ctx,c,art,R);ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeRect(R.x,R.y,R.w,R.h);
+    mType(ctx,d,40,550,670,54,col,col==='#fff');
+    ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=8;rr(ctx,80,612,590,326,10);ctx.fillStyle='#efe5ca';ctx.fill();ctx.restore();
+    ctx.lineWidth=5;ctx.strokeStyle=shade(P.frame,-.35);rr(ctx,80,612,590,326,10);ctx.stroke();
+    mText(ctx,d,100,626,550,298,'#1b140c');
+    mStats(ctx,P,d,566,940,'plain');
+    mFooter(ctx,d,col,996,col==='#fff');
+  }else{ // puro
+    const tc=fillBorder(ctx,d.border);
+    mArt(ctx,c,art,R,()=>rr(ctx,22,22,706,1006,24));
+    glass(ctx,40,40,670,64,16,.45);mName(ctx,d,40,40,670,64,'#fff',true);
+    if(st_)mStats(ctx,P,d,566,920,'glass');
+    mFooter(ctx,d,'#fff',994,true);
+  }
+}
+
+/* ============================================================
+   Render: Lorcana (marcos de diseño propio)
+   ============================================================ */
+const LS={
+  estandar: {border:1,panel:'solid',banner:'solid',frame:1},
+  arte:     {border:1,panel:'soft', banner:'solid',frame:1},
+  encantada:{border:1,panel:'glass',banner:'glass',frame:1,orn:1,shine:1},
+  sinmarco: {border:0,panel:'soft', banner:'solid',frame:0},
+  puro:     {border:1,panel:'none', banner:'glass',frame:1,textless:1},
+};
+function inkFill(ctx,d,x,y,w,h,vertical){
+  const a=(INKS[d.ink]||INKS.amber).c,b=d.ink2&&INKS[d.ink2]?INKS[d.ink2].c:null;
+  if(!b){ctx.fillStyle=a;return;}
+  const g=vertical?ctx.createLinearGradient(0,y,0,y+h):ctx.createLinearGradient(x,0,x+w,0);
+  g.addColorStop(0,a);g.addColorStop(.5,a);g.addColorStop(.5,b);g.addColorStop(1,b);ctx.fillStyle=g;
+}
+function goldGrad(ctx,x0,y0,x1,y1){const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'#fff1b8');g.addColorStop(.35,'#d9a933');g.addColorStop(.7,'#8a6114');g.addColorStop(1,'#f5d77a');return g;}
+function lStat(ctx,cx,cy,glyph,val,label){
+  ctx.save();ctx.shadowColor='#0008';ctx.shadowBlur=8;
+  if(glyph==='W'){ctx.beginPath();ctx.moveTo(cx,cy-40);ctx.lineTo(cx+34,cy-28);ctx.bezierCurveTo(cx+34,cy+5,cx+20,cy+28,cx,cy+42);ctx.bezierCurveTo(cx-20,cy+28,cx-34,cy+5,cx-34,cy-28);ctx.closePath();}
+  else{hexPath(ctx,cx,cy,38,PI/6);}
+  ctx.fillStyle='#211c2c';ctx.fill();ctx.restore();ctx.lineWidth=4;ctx.strokeStyle=goldGrad(ctx,cx-30,cy-40,cx+30,cy+40);ctx.stroke();
+  lGlyph(ctx,glyph,cx,cy,58,'#ffffff1f');
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${NW} 38px ${NFAM}`;ctx.fillText(val,cx,cy+3);
+  if(label){ctx.font=`700 12px ${FAM}`;ctx.fillStyle='#f5d77a';ctx.fillText(label,cx,cy+31);}
+}
+function lRarity(ctx,cx,cy,rar){
+  const R=LRAR[rar]||LRAR.comun;ctx.save();
+  let fill=R.c;if(fill==='rainbow'){const g=ctx.createLinearGradient(cx-14,cy-14,cx+14,cy+14);['#ff6b6b','#ffd93d','#6bff95','#5ec8ff','#c77dff'].forEach((c,i)=>g.addColorStop(i/4,c));fill=g;}
+  ctx.fillStyle=fill;ctx.strokeStyle='#000';ctx.lineWidth=2;
+  const k=Object.keys(LRAR).indexOf(rar);
+  if(k<=0){ctx.beginPath();ctx.arc(cx,cy,9,0,2*PI);}
+  else if(k===1){ctx.beginPath();ctx.moveTo(cx,cy-11);ctx.lineTo(cx+10,cy);ctx.lineTo(cx,cy+11);ctx.lineTo(cx-10,cy);ctx.closePath();}
+  else if(k===2||k===3){ctx.beginPath();ctx.moveTo(cx,cy-11);ctx.lineTo(cx+11,cy+9);ctx.lineTo(cx-11,cy+9);ctx.closePath();}
+  else if(k===4){hexPath(ctx,cx,cy,11,PI/6);}
+  else{ctx.beginPath();for(let i=0;i<10;i++){const a=-PI/2+i*PI/5,r=i%2?5:12;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();}
+  ctx.fill();ctx.stroke();ctx.restore();
+}
+function swirl(ctx,x,y,s,rot,stroke){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(s,s);ctx.strokeStyle=stroke;ctx.lineWidth=3/s;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(30,-40,90,-30,80,10);ctx.bezierCurveTo(72,40,35,30,45,8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(-10,40,30,80,60,70);ctx.stroke();
+  ctx.fillStyle=stroke;ctx.beginPath();ctx.arc(45,8,4/s*1.2,0,2*PI);ctx.fill();ctx.restore();
+}
+function renderLorcana(ctx,c,art){
+  const d=c.data,ink=(INKS[d.ink]||INKS.amber).c,t=d.ctype||'character',st=styleOf(c),S=LS[st],R=LSTYLE[st].art;
+  const by=S.textless?868:592; // altura del estandarte
+  if(S.border)fillBorder(ctx,d.border);else{ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);}
+  ctx.save();if(S.border)rr(ctx,18,18,714,1014,26);else{ctx.beginPath();ctx.rect(0,0,W,H);}ctx.clip();
+  ctx.fillStyle=shade(ink,-.6);ctx.fillRect(0,0,W,H);
+  if(art)drawCover(ctx,art,R,c.art);else placeholder(ctx,R,true);
+  if(S.shine){let g=ctx.createLinearGradient(0,0,W,H);['#ff8ad8','#8ad8ff','#b98aff','#ffe08a','#8affc1'].forEach((cc,i,a)=>g.addColorStop(i/(a.length-1),cc));
+    ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.55;ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;}
+  // panel de texto
+  if(S.panel==='solid'||S.panel==='soft'){
+    const g=ctx.createLinearGradient(0,690,0,1000);g.addColorStop(0,'#f7efdc');g.addColorStop(1,'#eadcbc');ctx.fillStyle=g;ctx.globalAlpha=S.panel==='soft'?.8:1;
+    ctx.beginPath();ctx.moveTo(0,700);ctx.quadraticCurveTo(375,670,W,700);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+  }else if(S.panel==='glass'){glass(ctx,36,748,678,236,18,.52);}
+  // franja de pie
+  if(S.border){ctx.fillStyle='#17131f';ctx.fillRect(0,992,W,60);inkFill(ctx,d,18,988,714,6);ctx.fillRect(0,988,W,6);}
+  else{const g=ctx.createLinearGradient(0,980,0,H);g.addColorStop(0,'transparent');g.addColorStop(1,'#000c');ctx.fillStyle=g;ctx.fillRect(0,960,W,90);}
+  ctx.restore();
+  if(S.frame){ctx.lineWidth=5;ctx.strokeStyle=goldGrad(ctx,0,0,W,H);rr(ctx,24,24,702,1002,22);ctx.stroke();}
+  if(S.orn){const gg=goldGrad(ctx,0,0,W,H);ctx.lineWidth=2;ctx.strokeStyle=gg;rr(ctx,34,34,682,982,16);ctx.stroke();
+}
+
+  // estandarte del nombre
+  const stats=(t==='character'||t==='location')?2:0,glassB=S.banner==='glass';
+  if(glassB)glass(ctx,40,by,670,108,18,.55);
+  else{ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=14;ctx.shadowOffsetY=4;rr(ctx,40,by,670,108,18);
+    const g=ctx.createLinearGradient(0,by,0,by+108);g.addColorStop(0,'#fffdf6');g.addColorStop(1,'#efe3c6');ctx.fillStyle=g;ctx.fill();ctx.restore();
+    ctx.lineWidth=3;ctx.strokeStyle=goldGrad(ctx,40,by,710,by+108);rr(ctx,40,by,670,108,18);ctx.stroke();}
+  ctx.save();rr(ctx,40,by,670,108,18);ctx.clip();inkFill(ctx,d,40,by,18,108,true);ctx.fillRect(40,by,18,108);ctx.restore();
+  const nameMax=stats?670-60-180:670-60-20;
+  ctx.fillStyle=glassB?'#fff':'#1d1626';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  const nm=(d.name||'').toUpperCase();fitText(ctx,nm,nameMax,px=>`${UPB?'600':'700'} ${px}px ${TFAM}`,UPB?46:40,18);ctx.fillText(nm,76,by+50);
+  if(d.version){fitText(ctx,d.version,nameMax,px=>`${VSTY} ${px}px ${FAM}`,30,15);ctx.fillStyle=glassB?'#f5d77a':'#5b4a3a';ctx.fillText(d.version,78,by+90);}
+  if(t==='character'){lStat(ctx,594,by+54,'S',d.strength||'0');lStat(ctx,668,by+54,'W',d.willpower||'0');}
+  else if(t==='location'){lStat(ctx,594,by+54,'I',d.move||'0','MOVER');lStat(ctx,668,by+54,'W',d.willpower||'0');}
+
+  if(!S.textless){
+    const tl=t==='character'?(d.classes||'Personaje'):[LTYPES[t],d.classes].filter(Boolean).join(' · ');
+    ctx.font=`${CSTY} 22px ${FAM}`;const tw=Math.min(560,ctx.measureText(tl).width+60);
+    rr(ctx,375-tw/2,708,tw,34,17);ctx.fillStyle=shade(ink,-.45);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=goldGrad(ctx,375-tw/2,708,375+tw/2,742);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';fitText(ctx,tl,tw-30,px=>`${CSTY} ${px}px ${FAM}`,22,13);ctx.fillText(tl,375,726);
+    const lore=Math.max(0,Math.min(6,parseInt(d.lore)||0)),hasLore=stats&&lore>0;
+    drawTextBox(ctx,{x:52,y:754,w:hasLore?586:646,h:226,rules:d.text,flavor:d.flavor,name:d.name,game:'lorcana',max:30,min:14,col:S.panel==='glass'?'#fff':'#2a2018',sepCol:S.panel==='glass'?'#fff9':'#5b4a3a88'});
+    if(hasLore){
+      const step=Math.min(46,226/lore),y0=752+(228-step*lore)/2+step/2;
+      for(let i=0;i<lore;i++){const cy=y0+i*step,cx=684;ctx.beginPath();ctx.moveTo(cx,cy-21);ctx.lineTo(cx+16,cy);ctx.lineTo(cx,cy+21);ctx.lineTo(cx-16,cy);ctx.closePath();
+        ctx.fillStyle='#2a2238';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=goldGrad(ctx,cx-16,cy-21,cx+16,cy+21);ctx.stroke();
+        ctx.fillStyle='#ffffff55';ctx.beginPath();ctx.moveTo(cx,cy-13);ctx.lineTo(cx+7,cy);ctx.lineTo(cx,cy);ctx.fill();}
+    }
+  }
+
+  // coste
+  const hx=96,hy=100;
+  if(d.inkable){ctx.beginPath();ctx.arc(hx,hy,70,0,2*PI);ctx.fillStyle=goldGrad(ctx,hx-70,hy-70,hx+70,hy+70);ctx.fill();
+    ctx.save();ctx.strokeStyle='#5a3d0a';ctx.lineWidth=2;ctx.setLineDash([3,7]);ctx.beginPath();ctx.arc(hx,hy,63,0,2*PI);ctx.stroke();ctx.restore();}
+  else{ctx.beginPath();ctx.arc(hx,hy,66,0,2*PI);ctx.fillStyle='#0d0b12';ctx.fill();}
+  hexPath(ctx,hx,hy,56,PI/6);let g=ctx.createRadialGradient(hx-15,hy-20,5,hx,hy,60);g.addColorStop(0,shade(ink,-.15));g.addColorStop(1,shade(ink,-.65));ctx.fillStyle=g;ctx.fill();
+  ctx.lineWidth=4;ctx.strokeStyle=goldGrad(ctx,hx-56,hy-56,hx+56,hy+56);ctx.stroke();
+  ctx.save();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='#000';ctx.shadowBlur=6;
+  fitText(ctx,String(d.cost??''),80,px=>`${NW} ${px}px ${NFAM}`,64,30);ctx.fillText(String(d.cost??''),hx,hy+4);ctx.restore();
+  ctx.beginPath();ctx.arc(hx,hy+92,20,0,2*PI);inkFill(ctx,d,hx-20,hy+72,40,40,false);ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=goldGrad(ctx,hx-20,hy+72,hx+20,hy+112);ctx.stroke();
+  ctx.fillStyle='#ffffff66';ctx.beginPath();ctx.arc(hx-6,hy+86,6,0,2*PI);ctx.fill();
+
+  // pie
+  ctx.save();ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillStyle='#fff';ctx.shadowColor='#000';ctx.shadowBlur=4;ctx.font=`italic 400 18px ${FAM}`;
+  ctx.fillText(d.artist?'Ilus. '+d.artist:'',44,1012);
+  ctx.textAlign='right';ctx.font=`400 15px ${FAM}`;ctx.fillStyle='#ffffffb8';
+  ctx.fillText(`${(d.number||'').trim()} · ${(d.set||'').trim().toUpperCase()} · DuckyLab, no oficial`,706,1012);ctx.restore();
+  lRarity(ctx,375,1012,d.rarity);
+}
+
+/* ============================================================
+   Dorsos de diseño propio
+   ============================================================ */
+function duck(ctx,cx,cy,s,col,eye){
+  ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);ctx.fillStyle=col;
+  ctx.beginPath();ctx.ellipse(-.05,.25,.62,.4,0,0,2*PI);ctx.fill();
+  ctx.beginPath();ctx.moveTo(-.55,.15);ctx.lineTo(-.85,-.1);ctx.lineTo(-.6,.35);ctx.fill();
+  ctx.beginPath();ctx.arc(.35,-.28,.3,0,2*PI);ctx.fill();
+  ctx.beginPath();ctx.moveTo(.6,-.3);ctx.quadraticCurveTo(.95,-.28,.92,-.16);ctx.lineTo(.6,-.14);ctx.fill();
+  ctx.fillStyle=eye;ctx.beginPath();ctx.arc(.42,-.34,.06,0,2*PI);ctx.fill();
+  ctx.beginPath();ctx.ellipse(-.1,.2,.32,.15,-.25,0,2*PI);ctx.globalAlpha=.25;ctx.fill();
+  ctx.restore();
+}
+function rnd(seed){return()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};}
+function renderBack(ctx,c,backImg){
+  if(c.back&&(c.back.mode==='custom'||c.back.mode==='mine')&&backImg){ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);drawCover(ctx,backImg,{x:0,y:0,w:W,h:H},null);return;}
+  if(c.game==='magic'){
+    ctx.fillStyle='#0c0b0d';ctx.fillRect(0,0,W,H);
+    rr(ctx,30,30,690,990,22);let g=ctx.createRadialGradient(375,525,40,375,525,620);g.addColorStop(0,'#8a5a2b');g.addColorStop(.55,'#4a2c14');g.addColorStop(1,'#1e110a');ctx.fillStyle=g;ctx.fill();
+    ctx.save();rr(ctx,30,30,690,990,22);ctx.clip();ctx.globalAlpha=.13;ctx.strokeStyle='#ffd27a';ctx.lineWidth=2;
+    for(let i=0;i<48;i++){const a=i*PI/24;ctx.beginPath();ctx.moveTo(375,525);ctx.lineTo(375+Math.cos(a)*900,525+Math.sin(a)*900);ctx.stroke();}
+    ctx.globalAlpha=.18;for(let r=60;r<700;r+=34){ctx.beginPath();ctx.arc(375,525,r,0,2*PI);ctx.stroke();}ctx.restore();
+    ctx.lineWidth=6;ctx.strokeStyle=goldGrad(ctx,0,0,W,H);rr(ctx,52,52,646,946,16);ctx.stroke();ctx.lineWidth=2;rr(ctx,64,64,622,922,12);ctx.stroke();
+    // medallón
+    for(const [r,col] of [[205,'#1a0f08'],[195,goldGrad(ctx,170,320,580,730)],[182,'#2a1709']]){ctx.beginPath();ctx.arc(375,525,r,0,2*PI);ctx.fillStyle=col;ctx.fill();}
+    const pal=['#f2ead6','#3a78c2','#2b2523','#d0482a','#2e8a4f'];
+    pal.forEach((col,i)=>{const a=-PI/2+i*2*PI/5,x=375+Math.cos(a)*140,y=525+Math.sin(a)*140;ctx.beginPath();ctx.arc(x,y,24,0,2*PI);ctx.fillStyle=col;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#f5d77a';ctx.stroke();});
+    duck(ctx,375,525,120,goldGrad(ctx,255,405,495,645),'#2a1709');
+    ctx.fillStyle=goldGrad(ctx,200,820,550,880);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 64px ${TFAM}`;ctx.fillText('DUCKYLAB',375,850);
+    ctx.font=`600 24px ${FAM}`;ctx.fillStyle='#f5d77acc';ctx.fillText('— cartas de la casa —',375,900);
+    ctx.font=`700 30px ${TFAM}`;ctx.fillStyle='#f5d77acc';ctx.fillText('✦  ✦  ✦',375,190);
+  }else{
+    ctx.fillStyle='#0d0b12';ctx.fillRect(0,0,W,H);
+    rr(ctx,18,18,714,1014,26);let g=ctx.createRadialGradient(375,520,30,375,520,650);g.addColorStop(0,'#4d3487');g.addColorStop(.6,'#22174a');g.addColorStop(1,'#0c0a22');ctx.fillStyle=g;ctx.fill();
+    ctx.save();rr(ctx,18,18,714,1014,26);ctx.clip();const R=rnd(42);
+    for(let i=0;i<170;i++){const x=R()*W,y=R()*H,s=R()*2.4+.4;ctx.globalAlpha=.3+R()*.6;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,s,0,2*PI);ctx.fill();}
+    ctx.globalAlpha=.25;ctx.strokeStyle='#f5d77a';ctx.lineWidth=2;for(let r=90;r<720;r+=60){hexPath(ctx,375,520,r,PI/6);ctx.stroke();}
+    ctx.restore();
+    ctx.lineWidth=6;ctx.strokeStyle=goldGrad(ctx,0,0,W,H);rr(ctx,36,36,678,978,20);ctx.stroke();
+    hexPath(ctx,375,500,215,PI/6);ctx.fillStyle=goldGrad(ctx,160,285,590,715);ctx.fill();
+    hexPath(ctx,375,500,200,PI/6);g=ctx.createRadialGradient(340,440,10,375,500,220);g.addColorStop(0,'#6a4bb0');g.addColorStop(1,'#1d1440');ctx.fillStyle=g;ctx.fill();
+    Object.values(INKS).forEach((k,i)=>{const a=-PI/2+i*PI/3,x=375+Math.cos(a)*258,y=500+Math.sin(a)*258;ctx.beginPath();ctx.arc(x,y,20,0,2*PI);ctx.fillStyle=k.c;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#f5d77a';ctx.stroke();});
+    duck(ctx,375,505,125,goldGrad(ctx,250,380,500,630),'#1d1440');
+    ctx.fillStyle=goldGrad(ctx,200,820,550,880);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 66px ${TFAM}`;ctx.fillText('DUCKYLAB',375,850);
+    ctx.font=`italic 600 26px ${FAM}`;ctx.fillStyle='#f5d77acc';ctx.fillText('tinta de la casa',375,902);
+  }
+}
+
+/* ============================================================
+   Marcos propios: el usuario sube una imagen y DuckyLab monta
+   encima el arte y el texto en posiciones ajustables
+   ============================================================ */
+const FRAMES={magic:[],lorcana:[]};
+const FONTS={auto:'Según la tipografía de la carta',barlow:'Barlow',barlowc:'Barlow Condensed',cormorant:'Cormorant Garamond',baskerville:'Libre Baskerville',ebg:'EB Garamond',cinzel:'Cinzel',oswald:'Oswald',montserrat:'Montserrat',lora:'Lora',bebas:'Bebas Neue',georgia:'Georgia',arial:'Arial',custom:'Otra (instalada en tu ordenador)…'};
+function famOf(e){if(!e||!e.font||e.font==='auto')return null;if(e.font==='custom')return e.fontCustom?`"${e.fontCustom}", ${SANS_FB}`:null;if(e.font==='georgia')return SERIF_FB;if(e.font==='arial')return SANS_FB;return `"${FONTS[e.font]}", ${SANS_FB}`;}
+function fontFor(e,def){const f=famOf(e);if(!f)return def;return px=>`${e.italic?'italic ':''}${e.weight||'600'} ${px}px ${f}`;}
+function hexOk(v){return /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v);}
+const EL_NAMES={
+  art:'Ilustración (hueco del arte)',cost:'Coste',name:'Nombre',version:'Versión',classes:'Clasificaciones / tipo',type:'Línea de tipo',
+  rarity:'Rareza',text:'Texto de reglas',strength:'Fuerza',willpower:'Voluntad',move:'Coste de mover',lore:'Leyenda',pt:'Fuerza/Resistencia o lealtad',footer:'Pie (ilustrador y número)'
+};
+function defaultLayout(game){
+  if(game==='magic')return {
+    art:{x:0,y:0,w:750,h:1050},
+    cost:{x:688,y:80,size:38,show:true},
+    name:{x:66,y:82,w:440,size:38,color:'#111111',align:'left',show:true},
+    type:{x:66,y:611,w:540,size:30,color:'#111111',align:'left',show:true},
+    rarity:{x:672,y:610,size:40,show:true},
+    text:{x:84,y:660,w:582,h:262,size:33,color:'#141414',show:true},
+    pt:{x:632,y:955,size:42,color:'#111111',show:true},
+    footer:{x:50,y:1002,size:19,color:'#ffffff',show:true},
+  };
+  return {
+    art:{x:0,y:0,w:750,h:1050},
+    cost:{x:96,y:100,size:62,color:'#ffffff',badge:true,show:true},
+    name:{x:76,y:630,w:440,size:40,color:'#ffffff',align:'left',show:true},
+    version:{x:78,y:676,w:440,size:30,color:'#ffffff',align:'left',show:true},
+    classes:{x:375,y:726,w:520,size:22,color:'#ffffff',align:'center',show:true},
+    text:{x:52,y:754,w:586,h:226,size:30,color:'#2a2018',show:true},
+    strength:{x:594,y:646,size:36,color:'#ffffff',badge:false,show:true},
+    willpower:{x:668,y:646,size:36,color:'#ffffff',badge:false,show:true},
+    move:{x:594,y:646,size:36,color:'#ffffff',badge:false,show:true},
+    lore:{x:684,y:780,size:42,show:true},
+    footer:{x:44,y:1012,size:16,color:'#ffffff',show:true},
+  };
+}
+function frameOf(c){const id=String(c.data.style||'');if(!id.startsWith('f:'))return null;return FRAMES[c.game].find(f=>f.id===id.slice(2))||null;}
+async function ensureFrame(F){if(F._el&&F._src===F.img)return F._el;try{F._el=await loadImage(F.img);F._src=F.img;}catch(e){F._el=null;}return F._el;}
+async function saveFrames(game){await Store.putSet('frames-'+game,FRAMES[game].map(f=>({id:f.id,name:f.name,img:f.img,layout:f.layout})));}
+
+/* Vuelve transparente el hueco blanco del arte (relleno desde el centro de la mitad superior) */
+async function prepareFrame(file,keyWhite){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await loadImage(url);const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+    x.drawImage(img,0,0,W,H);
+    if(keyWhite){
+      const id=x.getImageData(0,0,W,H),p=id.data,seen=new Uint8Array(W*H),st=[];
+      const m=i=>Math.min(p[i*4],p[i*4+1],p[i*4+2]);
+      for(let sx=W*.3;sx<=W*.7;sx+=W*.1){const i=Math.round(H*.3)*W+Math.round(sx);if(p[i*4+3]>200&&m(i)>=225)st.push(i);}
+      while(st.length){
+        const i=st.pop();if(seen[i])continue;seen[i]=1;
+        if(p[i*4+3]<10||m(i)>=225){p[i*4+3]=0;const px=i%W,py=(i/W)|0;
+          if(px>0)st.push(i-1);if(px<W-1)st.push(i+1);if(py>0)st.push(i-W);if(py<H-1)st.push(i+W);}
+        else seen[i]=2; // borde
+      }
+      for(let i=0;i<W*H;i++)if(seen[i]===2){const v=m(i);if(v>170)p[i*4+3]=Math.min(p[i*4+3],Math.round((255-v)/85*255));}
+      x.putImageData(id,0,0);
+    }
+    return c.toDataURL('image/png');
+  }finally{URL.revokeObjectURL(url);}
+}
+
+function renderFramed(ctx,c,art,F){
+  const L=F.layout,d=c.data,g=c.game,R=L.art;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.beginPath();ctx.rect(R.x,R.y,R.w,R.h);ctx.clip();if(art)drawCover(ctx,art,R,c.art);else placeholder(ctx,R,g==='lorcana');ctx.restore();
+  if(F._el)ctx.drawImage(F._el,0,0,W,H);
+  const txt=(e,s,font)=>{if(!e||!e.show||!s)return;font=fontFor(e,font);if(e.upper===true)s=String(s).toUpperCase();else if(e.upper===false&&e._autoUpper)s=String(s);ctx.save();ctx.fillStyle=e.color||'#fff';ctx.textBaseline='middle';ctx.textAlign=e.align||'left';
+    fitText(ctx,s,e.w||600,font,e.size,10);ctx.fillText(s,e.x,e.y);ctx.restore();};
+  const num=(e,s,font)=>{if(!e||!e.show||s===''||s==null)return;font=fontFor(e,font);ctx.save();ctx.fillStyle=e.color||'#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=font(e.size);ctx.fillText(String(s),e.x,e.y+e.size*.06);ctx.restore();};
+  if(g==='magic'){
+    const e=L.cost;if(e.show){const syms=parseSyms(d.cost),sd=e.size;syms.forEach((s,i)=>drawManaSym(ctx,s,e.x-sd/2-(syms.length-1-i)*(sd+4),e.y,sd));}
+    txt(L.name,d.name,px=>`700 ${px}px ${FAM}`);
+    txt(L.type,d.type,px=>`600 ${px}px ${FAM}`);
+    if(L.rarity.show)mRarityGem(ctx,L.rarity.x,L.rarity.y,L.rarity.size,d.rarity);
+    if(L.text.show)drawTextBox(ctx,{x:L.text.x,y:L.text.y,w:L.text.w,h:L.text.h,rules:d.text,flavor:d.flavor,name:d.name,game:'magic',max:L.text.size,min:12,col:L.text.color,fam:famOf(L.text)||RFAM});
+    const pt=d.loyalty?d.loyalty:(d.power||d.toughness)?`${d.power||0}/${d.toughness||0}`:'';
+    num(L.pt,pt,px=>`700 ${px}px ${FAM}`);
+    if(L.footer.show){const f=L.footer;ctx.save();ctx.fillStyle=f.color;ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.font=`600 ${f.size}px ${FAM}`;
+      ctx.fillText(`${(d.number||'').trim()} ${(MRAR[d.rarity]||MRAR.comun).l} · ${(d.set||'').trim().toUpperCase()}`,f.x,f.y);ctx.font=`italic 400 ${f.size}px ${FAM}`;if(d.artist)ctx.fillText('Ilus. '+d.artist,f.x,f.y+f.size*1.2);ctx.restore();}
+  }else{
+    const t=d.ctype||'character',ink=(INKS[d.ink]||INKS.amber).c;
+    const ce=L.cost;if(ce.show){
+      if(ce.badge){const k=ce.size/62;ctx.save();ctx.translate(ce.x,ce.y);ctx.scale(k,k);
+        if(d.inkable){ctx.beginPath();ctx.arc(0,0,70,0,2*PI);ctx.fillStyle=goldGrad(ctx,-70,-70,70,70);ctx.fill();}
+        hexPath(ctx,0,0,56,PI/6);const gg=ctx.createRadialGradient(-15,-20,5,0,0,60);gg.addColorStop(0,shade(ink,-.15));gg.addColorStop(1,shade(ink,-.65));ctx.fillStyle=gg;ctx.fill();
+        ctx.lineWidth=4;ctx.strokeStyle=goldGrad(ctx,-56,-56,56,56);ctx.stroke();ctx.restore();}
+      ctx.save();ctx.shadowColor='#000';ctx.shadowBlur=6;num(ce,d.cost,px=>`${NW} ${px}px ${NFAM}`);ctx.restore();
+    }
+    txt(L.name,L.name.upper===false?(d.name||''):(d.name||'').toUpperCase(),px=>`${UPB?'600':'700'} ${px}px ${TFAM}`);
+    txt(L.version,d.version,px=>`${VSTY} ${px}px ${FAM}`);
+    txt(L.classes,t==='character'?d.classes:[LTYPES[t],d.classes].filter(Boolean).join(' · '),px=>`${CSTY} ${px}px ${FAM}`);
+    if(L.text.show)drawTextBox(ctx,{x:L.text.x,y:L.text.y,w:L.text.w,h:L.text.h,rules:d.text,flavor:d.flavor,name:d.name,game:'lorcana',max:L.text.size,min:12,col:L.text.color,fam:famOf(L.text)||RFAM});
+    const stat=(e,glyph,v,label)=>{if(!e.show)return;if(e.badge){const k=e.size/36;ctx.save();ctx.translate(e.x,e.y);ctx.scale(k,k);lStat(ctx,0,0,glyph,v,label);ctx.restore();}else num(e,v,px=>`${NW} ${px}px ${NFAM}`);};
+    if(t==='character'){stat(L.strength,'S',d.strength||'0');stat(L.willpower,'W',d.willpower||'0');}
+    else if(t==='location'){stat(L.move,'I',d.move||'0','MOVER');stat(L.willpower,'W',d.willpower||'0');}
+    const lore=Math.max(0,Math.min(6,parseInt(d.lore)||0)),le=L.lore;
+    if(le.show&&(t==='character'||t==='location')&&lore){const s=le.size;for(let i=0;i<lore;i++){const cx=le.x,cy=le.y+i*s*1.05;ctx.beginPath();ctx.moveTo(cx,cy-s/2);ctx.lineTo(cx+s*.38,cy);ctx.lineTo(cx,cy+s/2);ctx.lineTo(cx-s*.38,cy);ctx.closePath();
+      ctx.fillStyle='#2a2238';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=goldGrad(ctx,cx-s/2,cy-s/2,cx+s/2,cy+s/2);ctx.stroke();}}
+    if(L.footer.show){const f=L.footer;ctx.save();ctx.fillStyle=f.color;ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=`italic 400 ${f.size}px ${FAM}`;
+      ctx.fillText([d.artist?'Ilus. '+d.artist:'',`${(d.number||'').trim()} · ${(d.set||'').trim().toUpperCase()}`].filter(Boolean).join('   '),f.x,f.y);ctx.restore();}
+  }
+}
+/* Recuadro del elemento que se está ajustando (solo en la vista previa) */
+function elBounds(k,e){
+  if(e.w&&e.h)return {x:e.x,y:e.y,w:e.w,h:e.h};
+  if(e.w){const x=e.align==='center'?e.x-e.w/2:e.align==='right'?e.x-e.w:e.x;return {x,y:e.y-e.size*.7,w:e.w,h:e.size*1.4};}
+  if(k==='lore')return {x:e.x-e.size*.5,y:e.y-e.size*.6,w:e.size,h:e.size*3.4};
+  if(k==='cost'&&e.align===undefined&&!('badge' in e))return {x:e.x-e.size*4,y:e.y-e.size*.65,w:e.size*4.1,h:e.size*1.3};
+  if(k==='footer')return {x:e.x,y:e.y-e.size,w:420,h:e.size*2.6};
+  return {x:e.x-e.size,y:e.y-e.size,w:e.size*2,h:e.size*2};
+}
+
+/* ============================================================
+   Render completo
+   ============================================================ */
+async function renderCard(ctx,card,side){
+  ctx.save();ctx.clearRect(0,0,W,H);
+  if(side==='back'){const bi=await imgOf(card,'back');setTypo(null);renderBack(ctx,card,bi);}
+  else{const art=await imgOf(card,'img');const F=frameOf(card);if(F)await ensureFrame(F);setTypo(card.game,card.data.typo||'guia');if(F){renderFramed(ctx,card,art,F);}else if(card.game==='magic')renderMagic(ctx,card,art);else renderLorcana(ctx,card,art);applyFx(ctx,card.data.fx);}
+  ctx.restore();
+}
+async function cardCanvas(card,side,scale=1){
+  const c=document.createElement('canvas');c.width=Math.round(W*scale);c.height=Math.round(H*scale);
+  const x=c.getContext('2d');x.scale(scale,scale);await renderCard(x,card,side);return c;
+}
+const canvasBlob=(c,type,q)=>new Promise(r=>c.toBlob(r,type,q));
+
+/* ============================================================
+   PDF (generador propio, imágenes JPEG)
+   ============================================================ */
+const MM=72/25.4;
+function b64ToBytes(dataURL){const s=atob(dataURL.split(',')[1]);const b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b;}
+function buildPDF(pages,images){
+  const enc=new TextEncoder(),chunks=[],off=[];let len=0;
+  const push=d=>{const b=typeof d==='string'?enc.encode(d):d;chunks.push(b);len+=b.length;};
+  const f=n=>(Math.round(n*1000)/1000).toString();
+  const obj=(n,fn)=>{off[n]=len;push(n+' 0 obj\n');fn();push('\nendobj\n');};
+  push('%PDF-1.4\n%âãÏÓ\n');
+  const first=3+images.length,kids=pages.map((p,i)=>(first+i*2)+' 0 R').join(' ');
+  obj(1,()=>push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2,()=>push(`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>`));
+  images.forEach((im,i)=>obj(3+i,()=>{push(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.bytes.length} >>\nstream\n`);push(im.bytes);push('\nendstream');}));
+  pages.forEach((p,i)=>{
+    const pn=first+i*2,cn=pn+1;let s='';
+    p.draws.forEach(d=>{s+=`q ${f(d.w)} 0 0 ${f(d.h)} ${f(d.x)} ${f(d.y)} cm /Im${d.img} Do Q\n`;});
+    if(p.lines&&p.lines.length){s+='0.4 w 0 0 0 RG\n';p.lines.forEach(l=>{s+=`${f(l[0])} ${f(l[1])} m ${f(l[2])} ${f(l[3])} l S\n`;});}
+    const xo=[...new Set(p.draws.map(d=>d.img))].map(k=>`/Im${k} ${3+k} 0 R`).join(' ');
+    obj(pn,()=>push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${f(p.w)} ${f(p.h)}] /Resources << /XObject << ${xo} >> >> /Contents ${cn} 0 R >>`));
+    const sb=enc.encode(s);obj(cn,()=>{push(`<< /Length ${sb.length} >>\nstream\n`);push(sb);push('\nendstream');});
+  });
+  const xref=len,n=first+pages.length*2;
+  push(`xref\n0 ${n}\n0000000000 65535 f \n`);
+  for(let i=1;i<n;i++)push(String(off[i]).padStart(10,'0')+' 00000 n \n');
+  push(`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(chunks,{type:'application/pdf'});
+}
+/* list: [{card,copies}] ; opts {paper:'a4'|'letter'|'card', backs:bool, marks:bool, fronts:bool} */
+async function makePrintPDF(list,opts){
+  const CW=63*MM,CH=88*MM,images=[],idx=new Map();
+  const imgIdx=async(card,side)=>{
+    const k=card.id+side;if(idx.has(k))return idx.get(k);
+    const c=await cardCanvas(card,side);const bytes=b64ToBytes(c.toDataURL('image/jpeg',.93));
+    images.push({bytes,w:c.width,h:c.height});idx.set(k,images.length-1);return images.length-1;
+  };
+  const inst=[];list.forEach(({card,copies})=>{for(let i=0;i<Math.max(1,copies|0);i++)inst.push(card);});
+  const pages=[];
+  if(opts.paper==='card'){
+    for(const card of inst){
+      if(opts.fronts!==false)pages.push({w:CW,h:CH,draws:[{img:await imgIdx(card,'front'),x:0,y:0,w:CW,h:CH}]});
+      if(opts.backs)pages.push({w:CW,h:CH,draws:[{img:await imgIdx(card,'back'),x:0,y:0,w:CW,h:CH}]});
+    }
+  }else{
+    const PW=(opts.paper==='letter'?215.9:210)*MM,PH=(opts.paper==='letter'?279.4:297)*MM;
+    const mx=(PW-3*CW)/2,my=(PH-3*CH)/2;
+    const marks=[];
+    if(opts.marks){const L=5*MM,g=1*MM;
+      for(let i=0;i<=3;i++){const x=mx+i*CW;marks.push([x,PH-my+g,x,PH-my+g+L],[x,my-g,x,my-g-L]);}
+      for(let j=0;j<=3;j++){const y=my+j*CH;marks.push([mx-g,y,mx-g-L,y],[PW-mx+g,y,PW-mx+g+L,y]);}}
+    for(let p=0;p<inst.length;p+=9){
+      const chunk=inst.slice(p,p+9),fr={w:PW,h:PH,draws:[],lines:marks},bk={w:PW,h:PH,draws:[],lines:marks};
+      for(let i=0;i<chunk.length;i++){
+        const col=i%3,row=Math.floor(i/3),y=PH-my-(row+1)*CH;
+        fr.draws.push({img:await imgIdx(chunk[i],'front'),x:mx+col*CW,y,w:CW,h:CH});
+        if(opts.backs)bk.draws.push({img:await imgIdx(chunk[i],'back'),x:mx+(2-col)*CW,y,w:CW,h:CH}); // espejo para doble cara
+      }
+      if(opts.fronts!==false)pages.push(fr);if(opts.backs)pages.push(bk);
+    }
+  }
+  return buildPDF(pages,images);
+}
+
+/* ============================================================
+   Exportar
+   ============================================================ */
+async function exportCard(card,fmt,which){
+  const sides=which==='both'?['front','back']:[which];
+  const base=slug(card.data.name),lbl={front:'frente',back:'dorso'};
+  busy(true,'Exportando…');
+  try{
+    if(fmt==='pdf'){
+      const blob=await makePrintPDF([{card,copies:1}],{paper:'card',fronts:sides.includes('front'),backs:sides.includes('back')});
+      busy(false);await saveFile(blob,`${base}.pdf`);return;
+    }
+    const files=[];
+    for(const s of sides){
+      const c=await cardCanvas(card,s);let out=c;
+      if(fmt==='png'){out=document.createElement('canvas');out.width=W;out.height=H;const x=out.getContext('2d');rr(x,0,0,W,H,36);x.clip();x.drawImage(c,0,0);}
+      files.push({blob:await canvasBlob(out,fmt==='png'?'image/png':'image/jpeg',.95),name:`${base}-${lbl[s]}.${fmt}`});
+    }
+    busy(false);
+    for(const f of files)await saveFile(f.blob,f.name);
+  }catch(e){busy(false);toast('Error al exportar: '+e.message);}
+}
+
+/* ============================================================
+   Estado e interfaz
+   ============================================================ */
+const HOUSE={magic:null,lorcana:null};
+let cards=[],current=null,filter='all',selMode=false;const selected=new Set();
+
+async function makeThumbs(card){
+  const f=await cardCanvas(card,'front',.36),b=await cardCanvas(card,'back',.36);
+  card.thumbF=f.toDataURL('image/jpeg',.82);card.thumbB=b.toDataURL('image/jpeg',.82);
+}
+function sortCards(){cards.sort((a,b)=>b.updated-a.updated);}
+
+function renderGallery(){
+  const q=$('#search').value.trim().toLowerCase();
+  const list=cards.filter(c=>(filter==='all'||c.game===filter)&&(!q||(c.data.name||'').toLowerCase().includes(q)));
+  $('#empty').classList.toggle('hidden',cards.length>0);
+  $('#printBtn').textContent=selMode&&selected.size?`🖨 Imprimir (${selected.size})`:'🖨 Imprimir';
+  $('#grid').innerHTML=list.map(c=>`
+    <div class="tile${selected.has(c.id)?' sel':''}" data-id="${c.id}">
+      <div class="cardbox"><div class="flip"><img class="front" src="${c.thumbF||''}" alt=""><img class="back" src="${c.thumbB||''}" alt=""></div></div>
+      ${selMode?`<div class="chk">${selected.has(c.id)?'✓':''}</div>`:''}
+      <div class="acts"><button data-a="flip" title="Voltear">↻</button><button data-a="dup" title="Duplicar">⧉</button><button data-a="del" title="Borrar">🗑</button></div>
+      <div class="name"><b>${esc(c.data.name||'Sin nombre')}</b><span class="tag">${c.game==='magic'?'Magic':'Lorcana'}</span></div>
+    </div>`).join('');
+}
+$('#grid').addEventListener('click',async e=>{
+  const tile=e.target.closest('.tile');if(!tile)return;const id=tile.dataset.id,card=cards.find(c=>c.id===id);
+  const a=e.target.closest('[data-a]');
+  if(a){
+    e.stopPropagation();
+    if(a.dataset.a==='flip')tile.querySelector('.flip').classList.toggle('flipped');
+    if(a.dataset.a==='dup'){const c=JSON.parse(JSON.stringify(card,(k,v)=>k.startsWith('_')?undefined:v));c.id=uid();c.created=c.updated=Date.now();c.data.name=(c.data.name||'')+' (copia)';await makeThumbs(c);await Store.put(c);cards.push(c);sortCards();renderGallery();toast('Carta duplicada');}
+    if(a.dataset.a==='del'){if(await confirmBox(`¿Borrar «${esc(card.data.name||'Sin nombre')}»?`,'Borrar')){await Store.del(id);cards=cards.filter(c=>c.id!==id);selected.delete(id);renderGallery();toast('Carta borrada');}}
+    return;
+  }
+  if(selMode){selected.has(id)?selected.delete(id):selected.add(id);renderGallery();return;}
+  openEditor(card);
+});
+$('#gameFilter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;filter=b.dataset.g;[...$('#gameFilter').children].forEach(x=>x.classList.toggle('on',x===b));renderGallery();});
+$('#search').addEventListener('input',renderGallery);
+$('#selMode').onclick=()=>{selMode=!selMode;if(!selMode)selected.clear();$('#selMode').classList.toggle('pri',selMode);$('#selAll').classList.toggle('hidden',!selMode);renderGallery();};
+$('#selAll').onclick=()=>{const vis=[...document.querySelectorAll('.tile')].map(t=>t.dataset.id);const all=vis.every(id=>selected.has(id));vis.forEach(id=>all?selected.delete(id):selected.add(id));renderGallery();};
+$('#printBtn').onclick=()=>openPrint();
+
+function show(view){['gallery','editor','templates'].forEach(v=>$('#'+v).classList.toggle('hidden',view!==v));window.scrollTo(0,0);}
+let mode='card',tplReturn=null; // mode: 'card' (creador de cartas) o 'tpl' (editor de plantillas)
+async function refreshDirty(){
+  const dirty=[...FRAMES.magic,...FRAMES.lorcana].filter(f=>f._dirty);
+  if(dirty.length){busy(true,'Actualizando miniaturas…');for(const f of dirty){f._dirty=false;for(const o of cards)if(o.data.style==='f:'+f.id){await makeThumbs(o);await Store.put(o);}}busy(false);}
+}
+function setMode(m){mode=m;document.body.classList.toggle('tplmode',m==='tpl');}
+async function goGallery(){await flushSave();await refreshDirty();setMode('card');current=null;show('gallery');renderGallery();}
+$('#goHome').onclick=goGallery;$('#cardsBtn').onclick=goGallery;
+$('#backToGallery').onclick=()=>mode==='tpl'?leaveTemplate():goGallery();
+$('#tplBtn').onclick=()=>showTemplates();
+$('#newMagic').onclick=()=>createCard('magic');$('#newLorcana').onclick=()=>createCard('lorcana');
+async function createCard(game){
+  await flushSave();
+  const c=newCard(game);
+  // hereda el dorso personalizado de la última carta del mismo juego
+  if(HOUSE[game])c.back={mode:'mine',img:null};
+  await makeThumbs(c);await Store.put(c);cards.unshift(c);openEditor(c);
+}
+
+/* ---------- Editor ---------- */
+const SYMS={magic:['W','U','B','R','G','C','1','2','3','X','T','Q','W/U','B/R','G/P','S','E'],lorcana:['E','I','S','W','L']};
+const symIconCache={};
+function symIcon(game,code){
+  const k=game+code;if(symIconCache[k])return symIconCache[k];
+  const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d');
+  if(game==='magic')drawManaSym(x,code,25,23,40);else lGlyph(x,code,24,24,40,'#ece8f5');
+  return symIconCache[k]=c.toDataURL();
+}
+function sel(name,opts,val){return `<select data-k="${name}">${Object.entries(opts).map(([k,v])=>`<option value="${k}"${k===val?' selected':''}>${esc(v)}</option>`).join('')}</select>`;}
+function inp(name,label,val,ph=''){return `<label class="f">${label}<input type="text" data-k="${name}" value="${esc(val)}" placeholder="${esc(ph)}"></label>`;}
+function symBar(game){return `<div class="syms">${SYMS[game].map(s=>`<button type="button" data-sym="${s}" title="{${s}}"><img src="${symIcon(game,s)}" alt="{${s}}"></button>`).join('')}</div>`;}
+
+function formHTML(c){
+  const d=c.data,g=c.game;
+  const imgPanel=`<div class="panel"><h3>🖼 Imagen</h3>
+    <div class="drop" id="dropArt">${c.img?'Cambiar imagen: toca aquí, arrástrala o pégala (Ctrl+V)':'Toca aquí, arrastra una imagen o pégala (Ctrl+V)'}</div>
+    <input type="file" id="artFile" accept="image/*" class="hidden">
+    <div class="row" style="margin-top:12px"><label class="f">Zoom<input type="range" id="zoom" min="1" max="4" step="0.01" value="${c.art.z||1}"></label></div>
+    <div class="row"><button class="btn sm" id="resetArt">Centrar imagen</button>${c.img?'<button class="btn sm danger" id="delArt">Quitar imagen</button>':''}</div></div>`;
+  let data;
+  if(g==='magic'){
+    const fr={auto:'Automático (según el coste)'};Object.entries(MFR).forEach(([k,v])=>fr[k]=v.n);
+    data=`<div class="panel"><h3>✏️ Datos</h3>
+      <div class="row">${inp('name','Nombre',d.name)}<label class="f">Coste de maná<input type="text" data-k="cost" id="costInp" value="${esc(d.cost)}" placeholder="{2}{R}{R}"></label></div>
+      <div class="costed"><div class="costhead"><span>Coste en la carta <small>(toca un símbolo para quitarlo)</small></span><button type="button" class="btn sm" id="costClear">Vaciar</button></div>
+        <div class="chips" id="costChips"></div>
+        <div class="syms" id="costPal">${['W','U','B','R','G','C','X','0','1','2','3','4','5','6','7','8','9','S'].map(s=>`<button type="button" data-cost="${s}" title="Añadir {${s}}"><img src="${symIcon('magic',s)}" alt="{${s}}"></button>`).join('')}</div></div>
+      <div class="row">${inp('type','Línea de tipo',d.type,'Criatura — Pato')}<label class="f">Color del marco${sel('frame',fr,d.frame)}</label></div>
+      <div class="row"><label class="f">Rareza${sel('rarity',Object.fromEntries(Object.entries(MRAR).map(([k,v])=>[k,v.n])),d.rarity)}</label>${inp('power','Fuerza',d.power)}${inp('toughness','Resistencia',d.toughness)}${inp('loyalty','Lealtad (planeswalker)',d.loyalty)}</div>
+      <div class="row">${inp('artist','Ilustrador',d.artist)}${inp('set','Código de set',d.set)}${inp('number','Número',d.number)}</div></div>`;
+  }else{
+    const inks={};Object.entries(INKS).forEach(([k,v])=>inks[k]=v.n);
+    data=`<div class="panel"><h3>✏️ Datos</h3>
+      <div class="row">${inp('name','Nombre',d.name)}${inp('version','Versión (subtítulo)',d.version)}</div>
+      <div class="row"><label class="f">Tipo${sel('ctype',LTYPES,d.ctype)}</label>${inp('classes','Clasificaciones',d.classes,'Soñado · Héroe')}</div>
+      <div class="row">${inp('cost','Coste de tinta',d.cost)}<label class="f">Tinta${sel('ink',inks,d.ink)}</label><label class="f">Segunda tinta${sel('ink2',{'':'— ninguna —',...inks},d.ink2||'')}</label></div>
+      <div class="row"><label class="f chk"><input type="checkbox" data-k="inkable"${d.inkable?' checked':''}> Se puede usar como tinta</label></div>
+      <div class="row">${inp('strength','Fuerza',d.strength)}${inp('willpower','Voluntad',d.willpower)}${inp('lore','Leyenda (rombos)',d.lore)}${inp('move','Coste de mover (localización)',d.move)}</div>
+      <div class="row"><label class="f">Rareza${sel('rarity',Object.fromEntries(Object.entries(LRAR).map(([k,v])=>[k,v.n])),d.rarity)}</label>${inp('artist','Ilustrador',d.artist)}${inp('set','Set',d.set)}${inp('number','Número',d.number)}</div></div>`;
+  }
+  const help=g==='magic'
+    ?`Símbolos: <code>{T}</code> girar, <code>{Q}</code> enderezar, <code>{2}</code> <code>{X}</code> genérico, <code>{W}{U}{B}{R}{G}</code> colores, <code>{C}</code> incoloro, <code>{W/U}</code> híbrido, <code>{G/P}</code> pirexiano, <code>{S}</code> nieve, <code>{E}</code> energía.`
+    :`Símbolos: <code>{E}</code> agotar, <code>{I}</code> tinta, <code>{S}</code> fuerza, <code>{W}</code> voluntad, <code>{L}</code> leyenda.`;
+  const text=`<div class="panel"><h3>📜 Texto</h3>
+    ${symBar(g)}
+    <label class="f">Reglas<textarea data-k="text" data-symtarget>${esc(d.text)}</textarea></label>
+    <label class="f" style="margin-top:10px">Texto de ambientación (cursiva)<textarea data-k="flavor" data-symtarget style="min-height:60px">${esc(d.flavor)}</textarea></label>
+    <p class="help">${help}<br><code>**negrita**</code> · <code>*cursiva*</code> · <code>~</code> pone el nombre de la carta · lo que va entre (paréntesis) sale en cursiva · cada línea es un párrafo. La letra se encoge sola si no cabe.</p></div>`;
+  const back=`<div class="panel"><h3>🂠 Dorso</h3>
+    <div class="row"><label class="f">Dorso de esta carta${sel('_backmode',{default:'Diseño DuckyLab',mine:'Mi dorso de '+(g==='magic'?'Magic':'Lorcana'),custom:'Una imagen solo para esta carta'},c.back.mode)}</label></div>
+    <div class="${c.back.mode==='mine'?'':'hidden'}" id="backMine">
+      <div class="drop" id="dropMine">${(HOUSE[g]?'Cambiar mi dorso de ':'Sube aquí tu dorso de ')+(g==='magic'?'Magic':'Lorcana')}</div><input type="file" id="mineFile" accept="image/*" class="hidden">
+      <p class="help">Se guarda una sola vez y se usa en todas tus cartas de ${g==='magic'?'Magic':'Lorcana'} que tengan «Mi dorso». Las cartas nuevas lo llevan puesto solas.</p>
+    </div>
+    <div class="${c.back.mode==='custom'?'':'hidden'}" id="backCustom">
+      <div class="drop" id="dropBack">${c.back.img?'Cambiar imagen del dorso':'Toca o arrastra la imagen del dorso'}</div><input type="file" id="backFile" accept="image/*" class="hidden">
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" id="backAll">Usar este dorso en todas mis cartas de ${g==='magic'?'Magic':'Lorcana'}</button></div></div>`;
+  const styles=g==='magic'?MSTYLE:LSTYLE,curS=styleOf(c);
+  const look=`<div class="panel"><h3>🎨 Estilo de arte</h3>
+    <div class="picks" id="stylePick">${Object.entries(styles).map(([k,v])=>`<button type="button" data-style="${k}" class="${k===curS?'on':''}"><canvas width="150" height="210"></canvas><span>${v.n}</span></button>`).join('')}${FRAMES[g].map(f=>`<button type="button" data-style="f:${f.id}" class="${d.style==='f:'+f.id?'on':''}"><canvas width="150" height="210"></canvas><span>🖼 ${esc(f.name)}</span></button>`).join('')}<button type="button" id="addFrame" class="addf"><span style="font-size:30px">＋</span><span>Nueva plantilla</span></button></div>
+    <h3 style="margin-top:16px">✨ Efecto</h3>
+    <div class="picks" id="fxPick">${Object.entries(FX).map(([k,v])=>`<button type="button" data-fx="${k}" class="${k===(d.fx||'none')?'on':''}"><canvas width="150" height="210"></canvas><span>${v}</span></button>`).join('')}</div>
+    <div class="row" style="margin-top:14px"><label class="f">Tipografía${sel('typo',TYPOS,d.typo||'guia')}</label><label class="f">Color del borde${sel('border',Object.fromEntries(Object.entries(BORDERS).map(([k,v])=>[k,v.n])),d.border||'negro')}</label></div>
+    <p class="help">«Sin bordes»${g==='lorcana'?' y «Sin marco»':''} llevan el arte hasta el filo, sin borde. «Solo arte» deja la ilustración casi limpia y oculta el texto de reglas. El efecto también sale al exportar e imprimir.</p></div>`;
+  const tools=`<div class="panel"><h3>🧰 Carta</h3><div class="row"><button class="btn sm" id="dupCard">⧉ Duplicar</button><button class="btn sm danger" id="delCard">🗑 Borrar carta</button></div></div>`;
+  return imgPanel+look+`<div class="panel hidden" id="layoutPanel"><div id="layoutBox"></div></div>`+data+text+back+tools;
+}
+
+let lastSymTarget=null;
+function openEditor(card){
+  setMode('card');$('#backToGallery').textContent='← Mis cartas';
+  current=card;show('editor');$('#pflip').classList.remove('flipped');
+  $('#form').innerHTML=formHTML(card);bindForm();scheduleRender();schedulePicks();
+}
+function bindForm(){
+  const c=current,F=$('#form');
+  F.querySelectorAll('[data-k]').forEach(el=>{
+    const k=el.dataset.k;
+    const on=()=>{
+      if(k==='_backmode'){c.back.mode=el.value;$('#backCustom').classList.toggle('hidden',el.value!=='custom');$('#backMine').classList.toggle('hidden',el.value!=='mine');$('#pflip').classList.add('flipped');}
+      else c.data[k]=el.type==='checkbox'?el.checked:el.value;
+      changed();
+    };
+    el.addEventListener(el.tagName==='SELECT'||el.type==='checkbox'?'change':'input',on);
+    if('symtarget' in el.dataset)el.addEventListener('focus',()=>lastSymTarget=el);
+  });
+  lastSymTarget=F.querySelector('textarea[data-k=text]');
+  // retroceso / suprimir borran un símbolo {…} completo
+  F.querySelectorAll('#costInp,[data-symtarget]').forEach(el=>el.addEventListener('keydown',e=>{
+    if(e.key!=='Backspace'&&e.key!=='Delete')return;const a=el.selectionStart,b=el.selectionEnd;if(a!==b)return;const v=el.value;let i,j;
+    if(e.key==='Backspace'&&v[a-1]==='}'){i=v.lastIndexOf('{',a-1);j=a;}else if(e.key==='Delete'&&v[a]==='{'){i=a;j=v.indexOf('}',a)+1;}
+    if(i>=0&&j>i){e.preventDefault();el.value=v.slice(0,i)+v.slice(j);el.selectionStart=el.selectionEnd=i;el.dispatchEvent(new Event('input'));}
+  }));
+  const costInp=$('#costInp');
+  if(costInp){
+    const toks=()=>(costInp.value.match(/\{[^}]*\}/g)||[]);
+    const setCost=v=>{costInp.value=v;costInp.dispatchEvent(new Event('input'));};
+    const drawChips=()=>{const t=toks();$('#costChips').innerHTML=t.length?t.map((s,i)=>`<button type="button" data-i="${i}" title="Quitar ${esc(s)}"><img src="${symIcon('magic',s.slice(1,-1)||'?')}" alt="${esc(s)}"></button>`).join(''):'<span class="none">Sin coste (por ejemplo, una tierra)</span>';};
+    costInp.addEventListener('input',drawChips);drawChips();
+    $('#costChips').onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const t=toks();t.splice(+b.dataset.i,1);setCost(t.join(''));};
+    F.querySelectorAll('[data-cost]').forEach(b=>b.onclick=()=>setCost(costInp.value+`{${b.dataset.cost}}`));
+    $('#costClear').onclick=()=>setCost('');
+  }
+  F.querySelectorAll('[data-sym]').forEach(b=>{
+    b.addEventListener('mousedown',e=>e.preventDefault());
+    b.onclick=()=>{const t=lastSymTarget;if(!t)return;const ins=`{${b.dataset.sym}}`;const s=t.selectionStart??t.value.length,e=t.selectionEnd??s;
+      t.value=t.value.slice(0,s)+ins+t.value.slice(e);t.focus();t.selectionStart=t.selectionEnd=s+ins.length;t.dispatchEvent(new Event('input'));};
+  });
+  const drop=(zone,file,cb)=>{
+    zone.onclick=()=>file.click();
+    file.onchange=()=>{if(file.files[0])cb(file.files[0]);file.value='';};
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('over');});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('over'));
+    zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('over');const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));if(f)cb(f);});
+  };
+  drop($('#dropArt'),$('#artFile'),setArt);
+  if($('#dropBack'))drop($('#dropBack'),$('#backFile'),async f=>{c.back.img=await fileToDataURL(f,1400);c.back.mode='custom';$('#dropBack').textContent='Cambiar imagen del dorso';changed();$('#pflip').classList.add('flipped');});
+  drop($('#dropMine'),$('#mineFile'),async f=>{
+    const img=await fileToDataURL(f,1400);HOUSE[c.game]=img;await Store.putSet('back-'+c.game,img);
+    $('#dropMine').textContent='Cambiar mi dorso de '+(c.game==='magic'?'Magic':'Lorcana');changed();$('#pflip').classList.add('flipped');
+    for(const o of cards)if(o!==c&&o.game===c.game&&o.back&&o.back.mode==='mine'){await makeThumbs(o);await Store.put(o);}
+    toast('Dorso guardado para todas tus cartas de '+(c.game==='magic'?'Magic':'Lorcana'));
+  });
+  F.querySelectorAll('#stylePick [data-style]').forEach(b=>b.onclick=()=>{c.data.style=b.dataset.style;F.querySelectorAll('#stylePick button').forEach(x=>x.classList.toggle('on',x===b));$('#pflip').classList.remove('flipped');drawLayout();changed();});
+  $('#addFrame').onclick=()=>addFrame(c);
+  drawLayout();
+  F.querySelectorAll('#fxPick [data-fx]').forEach(b=>b.onclick=()=>{c.data.fx=b.dataset.fx;F.querySelectorAll('#fxPick button').forEach(x=>x.classList.toggle('on',x===b));$('#pflip').classList.remove('flipped');changed();});
+  $('#zoom').oninput=e=>{c.art.z=+e.target.value;changed();};
+  $('#resetArt').onclick=()=>{c.art={x:0,y:0,z:1};$('#zoom').value=1;changed();};
+  if($('#delArt'))$('#delArt').onclick=()=>{c.img=null;openEditor(c);changed();};
+  $('#backAll').onclick=async()=>{
+    const others=cards.filter(x=>x.game===c.game&&x.id!==c.id);
+    if(!others.length){toast('No tienes más cartas de este juego');return;}
+    if(!await confirmBox(`¿Poner este dorso en tus ${others.length} cartas de ${c.game==='magic'?'Magic':'Lorcana'}?`,'Aplicar','pri'))return;
+    busy(true,'Aplicando dorso…');
+    for(const o of others){o.back={mode:c.back.mode,img:c.back.img};await makeThumbs(o);await Store.put(o);}
+    busy(false);toast('Dorso aplicado');
+  };
+  $('#dupCard').onclick=async()=>{await flushSave();const n=JSON.parse(JSON.stringify(c,(k,v)=>k.startsWith('_')?undefined:v));n.id=uid();n.created=n.updated=Date.now();n.data.name=(n.data.name||'')+' (copia)';await makeThumbs(n);await Store.put(n);cards.unshift(n);openEditor(n);toast('Duplicada: ahora editas la copia');};
+  $('#delCard').onclick=async()=>{if(await confirmBox(`¿Borrar «${esc(c.data.name||'Sin nombre')}»?`,'Borrar')){clearTimeout(saveT);saveT=null;await Store.del(c.id);cards=cards.filter(x=>x.id!==c.id);current=null;show('gallery');renderGallery();toast('Carta borrada');}};
+}
+let layEl='name',layOn=false;
+/* Qué texto hay bajo el puntero (en coordenadas de la carta) */
+function hitElement(F,px,py){
+  let best=null,ba=Infinity;
+  for(const [k,e] of Object.entries(F.layout)){if(k==='art'||!EL_NAMES[k]||!e.show)continue;const b=elBounds(k,e),pad=12;
+    if(px>=b.x-pad&&px<=b.x+b.w+pad&&py>=b.y-pad&&py<=b.y+b.h+pad){const a=b.w*b.h;if(a<ba){ba=a;best=k;}}}
+  return best;
+}
+function frameModal(title,defName,askName=true){
+  return modal(`<h2>${title}</h2>
+    <p class="help">Una imagen del marco a tamaño de carta (63 × 88 mm). Lo ideal es un PNG con el hueco del arte transparente. DuckyLab pone tu ilustración detrás y el texto encima, y después puedes ajustar dónde va cada cosa.</p>
+    ${askName?`<label class="f">Nombre de la plantilla<input class="inp" id="frName" value="${esc(defName)}"></label>`:''}
+    <label class="f chk" style="margin-top:10px"><input type="checkbox" id="frKey" checked> Si el hueco del arte es blanco, volverlo transparente</label>
+    <div class="drop" id="frDrop" style="margin-top:12px">Toca aquí o arrastra la imagen del marco</div><input type="file" id="frFile" accept="image/*" class="hidden">
+    <p class="help" id="frInfo"></p>`,
+    [{label:'Cancelar',value:null},{label:'Guardar',cls:'pri',collect:m=>({name:askName?(m.querySelector('#frName').value.trim()||defName):defName,key:m.querySelector('#frKey').checked,file:m._file})}]);
+}
+const gameOfFrame=F=>FRAMES.magic.includes(F)?'magic':'lorcana';
+const usesOf=F=>cards.filter(c=>c.data.style==='f:'+F.id).length;
+async function newTemplate(game,card){
+  const r=await frameModal('🖼 Nueva plantilla',`Plantilla ${FRAMES[game].length+1}`);
+  if(!r)return null;if(!r.file){toast('No elegiste ninguna imagen');return null;}
+  busy(true,'Preparando el marco…');
+  try{const img=await prepareFrame(r.file,r.key);const f={id:uid(),name:r.name,img,layout:defaultLayout(game)};FRAMES[game].push(f);await saveFrames(game);busy(false);
+    if(card){card.data.style='f:'+f.id;changed();await flushSave();}
+    openTemplateEditor(f,card||null);toast('Plantilla creada. Pulsa los textos de la carta para colocarlos.');return f;
+  }catch(e){busy(false);toast('No se pudo leer la imagen');return null;}
+}
+async function addFrame(c){return newTemplate(c.game,c);}
+async function dupTemplate(F){const g=gameOfFrame(F);const n={id:uid(),name:F.name+' (copia)',img:F.img,layout:JSON.parse(JSON.stringify(F.layout))};FRAMES[g].push(n);await saveFrames(g);return n;}
+async function delTemplate(F){
+  const g=gameOfFrame(F),n=usesOf(F);
+  if(!await confirmBox(`¿Borrar la plantilla «${esc(F.name)}»?${n?` Las ${n} cartas que la usan volverán al estilo normal.`:''}`,'Borrar'))return false;
+  FRAMES[g]=FRAMES[g].filter(x=>x!==F);await saveFrames(g);
+  for(const o of cards)if(o.data.style==='f:'+F.id){o.data.style='';await makeThumbs(o);await Store.put(o);}
+  toast('Plantilla borrada');return true;
+}
+function sampleCard(F,fromCard){
+  const g=gameOfFrame(F);const base=fromCard||cards.find(c=>c.data.style==='f:'+F.id)||cards.find(c=>c.game===g);
+  const s=base?JSON.parse(JSON.stringify(base,(k,v)=>k.startsWith('_')||k==='thumbF'||k==='thumbB'?undefined:v)):newCard(g);
+  s._sample=true;s.id='sample';s.data.style='f:'+F.id;s.game=g;return s;
+}
+
+/* ---------- Galería de plantillas ---------- */
+let tplGame='lorcana';
+async function showTemplates(){await flushSave();await refreshDirty();setMode('card');current=null;show('templates');renderTemplates();}
+$('#tplGame').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tplGame=b.dataset.g;[...$('#tplGame').children].forEach(x=>x.classList.toggle('on',x===b));renderTemplates();});
+$('#tplNew').onclick=()=>newTemplate(tplGame,null);
+async function renderTemplates(){
+  const list=FRAMES[tplGame];$('#tplEmpty').classList.toggle('hidden',list.length>0);
+  $('#tplGrid').innerHTML=list.map(f=>{const n=usesOf(f);return `<div class="tile" data-tid="${f.id}">
+    <div class="cardbox"><canvas width="300" height="420" style="width:100%;height:100%;border-radius:4.2%/3%;box-shadow:0 10px 30px #0008"></canvas></div>
+    <div class="acts"><button data-a="edit" title="Editar">✏️</button><button data-a="dup" title="Duplicar">⧉</button><button data-a="del" title="Borrar">🗑</button></div>
+    <div class="name"><b>${esc(f.name)}</b><span class="tag">${n} carta${n===1?'':'s'}</span></div></div>`;}).join('');
+  for(const t of document.querySelectorAll('#tplGrid [data-tid]')){const F=list.find(f=>f.id===t.dataset.tid);const x=t.querySelector('canvas').getContext('2d');x.setTransform(.4,0,0,.4,0,0);await renderCard(x,sampleCard(F),'front');}
+}
+$('#tplGrid').addEventListener('click',async e=>{
+  const t=e.target.closest('[data-tid]');if(!t)return;const F=FRAMES[tplGame].find(f=>f.id===t.dataset.tid);if(!F)return;
+  const a=e.target.closest('[data-a]');
+  if(a&&a.dataset.a==='dup'){const n=await dupTemplate(F);renderTemplates();toast(`Creada «${n.name}»`);return;}
+  if(a&&a.dataset.a==='del'){if(await delTemplate(F))renderTemplates();return;}
+  openTemplateEditor(F,null);
+});
+
+/* ---------- Editor de plantillas ---------- */
+let editingTpl=null;
+async function openTemplateEditor(F,fromCard){
+  await flushSave();setMode('tpl');tplReturn=fromCard||null;editingTpl=F;
+  $('#backToGallery').textContent=fromCard?'← Volver a la carta':'← Plantillas';
+  current=sampleCard(F,fromCard);layEl='name';show('editor');$('#pflip').classList.remove('flipped');
+  const g=gameOfFrame(F),others=cards.filter(c=>c.game===g);
+  $('#form').innerHTML=`<div class="panel tplbanner"><h3>🖼 Editando la plantilla</h3>
+      <div class="row"><label class="f">Nombre<input type="text" id="tplName" value="${esc(F.name)}"></label></div>
+      <div class="row"><button class="btn sm" id="tplImg">Cambiar imagen del marco</button><button class="btn sm" id="tplDup">⧉ Duplicar plantilla</button><button class="btn sm danger" id="tplDel">🗑 Borrar plantilla</button></div>
+      <p class="help">Los cambios se guardan solos${usesOf(F)?` y se aplican a ${usesOf(F)===1?'la carta que usa':`las ${usesOf(F)} cartas que usan`} esta plantilla`:''}. Para hacer una variante sin tocar esta, duplícala.</p></div>
+    <div class="panel"><h3>👁 Vista previa</h3><div class="row">
+      <label class="f">Probar con<select id="tplSample"><option value="">Carta de ejemplo</option>${others.map(c=>`<option value="${c.id}"${current.data.name===c.data.name&&fromCard&&fromCard.id===c.id?' selected':''}>${esc(c.data.name||'Sin nombre')}</option>`).join('')}</select></label>
+      <label class="f">Tipografía de prueba${sel('typo',TYPOS,current.data.typo||'guia')}</label></div>
+      <p class="help">Solo para ver cómo queda: no cambia ninguna carta.</p></div>
+    <div class="panel" id="layoutPanel"><div id="layoutBox"></div></div>`;
+  $('#tplName').oninput=e=>{F.name=e.target.value.trim()||'Plantilla';clearTimeout(frameSaveT);frameSaveT=setTimeout(()=>saveFrames(g),400);};
+  $('#tplSample').onchange=e=>{const c=cards.find(x=>x.id===e.target.value);const typo=current.data.typo;current=sampleCard(F,c||null);if(!c)current=Object.assign(sampleCard(F,null),{});if(!c){const n=newCard(g);current.data={...n.data,style:'f:'+F.id};current.img=null;}current.data.typo=typo;scheduleRender();};
+  $('#form').querySelector('[data-k=typo]').onchange=e=>{current.data.typo=e.target.value;scheduleRender();};
+  $('#tplImg').onclick=async()=>{const r=await frameModal('Cambiar imagen del marco',F.name,false);if(!r||!r.file)return;busy(true,'Preparando el marco…');
+    try{F.img=await prepareFrame(r.file,r.key);F._el=null;await ensureFrame(F);await saveFrames(g);F._dirty=true;busy(false);scheduleRender();toast('Imagen cambiada; las posiciones se mantienen');}catch(e){busy(false);toast('No se pudo leer la imagen');}};
+  $('#tplDup').onclick=async()=>{const n=await dupTemplate(F);openTemplateEditor(n,null);toast(`Ahora editas «${n.name}»`);};
+  $('#tplDel').onclick=async()=>{if(await delTemplate(F)){if(tplReturn){const c=cards.find(x=>x.id===tplReturn.id);if(c){openEditor(c);return;}}showTemplates();}};
+  drawLayout();scheduleRender();
+}
+async function leaveTemplate(){
+  await refreshDirty();const back=tplReturn;tplReturn=null;editingTpl=null;
+  if(back){const c=cards.find(x=>x.id===back.id)||back;openEditor(c);}else showTemplates();
+}
+// el modal de subida guarda el archivo elegido en el propio modal
+document.addEventListener('click',e=>{if(e.target.id==='frDrop')$('#frFile').click();});
+document.addEventListener('change',e=>{if(e.target.id==='frFile'&&e.target.files[0]){const m=e.target.closest('.modal');m._file=e.target.files[0];$('#frDrop').textContent='✓ '+m._file.name;}});
+document.addEventListener('dragover',e=>{if(e.target.id==='frDrop'){e.preventDefault();e.target.classList.add('over');}});
+document.addEventListener('drop',e=>{if(e.target.id==='frDrop'){e.preventDefault();const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));if(f){const m=e.target.closest('.modal');m._file=f;e.target.textContent='✓ '+f.name;}}});
+
+let frameSaveT=null;
+function frameChanged(F){scheduleRender();schedulePicks();clearTimeout(frameSaveT);frameSaveT=setTimeout(()=>{saveFrames(current.game);F._dirty=true;},500);}
+function drawLayout(){
+  const box=$('#layoutBox');if(!box||!current)return;const F=frameOf(current);layOn=!!F&&mode==='tpl';
+  $('#layoutPanel').classList.toggle('hidden',!F);$('#posBtn').classList.toggle('hidden',!F||mode==='tpl');
+  if(!F){box.innerHTML='';scheduleRender();return;}
+  if(mode==='card'){
+    const n=usesOf(F);
+    box.innerHTML=`<h3>🖼 Plantilla «${esc(F.name)}»</h3>
+      <p class="help" style="margin:-4px 0 10px">La posición y el tamaño de los textos se guardan en la plantilla y valen para ${n>1?`las ${n} cartas que la usan`:'todas las cartas que la usen'}.</p>
+      <div class="row"><button class="btn sm pri" id="tplEdit">✏️ Editar plantilla</button><button class="btn sm" id="tplDupEdit">⧉ Hacer una variante solo para esta carta</button></div>`;
+    $('#tplEdit').onclick=()=>openTemplateEditor(F,current);
+    $('#tplDupEdit').onclick=async()=>{const nf=await dupTemplate(F);current.data.style='f:'+nf.id;changed();await flushSave();openTemplateEditor(nf,current);toast(`Creada «${nf.name}» para esta carta`);};
+    scheduleRender();return;
+  }
+  const L=F.layout;if(!L[layEl])layEl='art';const e=L[layEl];
+  const keys=Object.keys(L).filter(k=>EL_NAMES[k]);
+  const sl=(k,label,min,max)=>e[k]===undefined?'':`<label class="f">${label}<span class="numr"><input type="range" data-lk="${k}" min="${min}" max="${max}" step="1" value="${e[k]}"><input type="number" class="inp" data-lk="${k}" value="${e[k]}"></span></label>`;
+  box.innerHTML=`<div><h3>📐 Posiciones del texto · «${esc(F.name)}»</h3>
+    <p class="help" style="margin:-4px 0 10px"><b>Pulsa cualquier texto de la carta</b> (nombre, versión, números, reglas…) y arrástralo; con la rueda del ratón encima cambias su tamaño. También puedes elegirlo en la lista y usar las flechas del teclado (con Mayús, de 10 en 10) o escribir el valor. Se guarda en la plantilla.</p>
+    <div class="row"><label class="f">Elemento<select class="inp" id="laySel">${keys.map(k=>`<option value="${k}"${k===layEl?' selected':''}>${EL_NAMES[k]}</option>`).join('')}</select></label></div>
+    <p class="help" style="margin:-2px 0 8px">${layEl==='art'?'Pulsa un texto de la carta para elegirlo. Arrastrando fuera de los textos se encuadra la imagen.':'Arrástralo sobre la carta para moverlo; con la rueda del ratón encima cambias su tamaño.'}</p>
+    <div class="row">${sl('x','Horizontal',-100,850)}${sl('y','Vertical',-100,1150)}${sl('w','Ancho',20,750)}${sl('h','Alto',20,1050)}${sl('size','Tamaño',8,120)}</div>
+    <div class="row">${e.color!==undefined?`<label class="f">Color<span class="numr"><input type="color" data-lk="color" value="${(e.color||'#ffffff').slice(0,7)}"><input type="text" class="inp hexin" id="hexIn" value="${e.color}" placeholder="#RRGGBB" maxlength="9" spellcheck="false"></span></label>`:''}
+      ${e.align!==undefined?`<label class="f">Alineación<select class="inp" data-lk="align">${['left','center','right'].map(a=>`<option value="${a}"${a===e.align?' selected':''}>${{left:'Izquierda',center:'Centro',right:'Derecha'}[a]}</option>`).join('')}</select></label>`:''}</div>
+    ${e.color!==undefined?`<div class="row"><label class="f">Tipografía<select class="inp" id="fontSel">${Object.entries(FONTS).map(([k,v])=>`<option value="${k}"${k===(e.font||'auto')?' selected':''}>${v}</option>`).join('')}</select></label>
+      <label class="f">Grosor<select class="inp" id="fontW">${[['400','Normal'],['500','Medio'],['600','Seminegrita'],['700','Negrita']].map(([k,v])=>`<option value="${k}"${k===(e.weight||'600')?' selected':''}>${v}</option>`).join('')}</select></label></div>
+      <div class="row ${e.font==='custom'?'':'hidden'}" id="fontCustomRow"><label class="f">Nombre exacto de la fuente instalada<input type="text" class="inp" id="fontCustom" value="${esc(e.fontCustom||'')}" placeholder="Ej.: Brandon Text"></label></div>
+      <div class="row"><label class="f chk"><input type="checkbox" id="fontI"${e.italic?' checked':''}> Cursiva</label>${layEl!=='text'?`<label class="f chk"><input type="checkbox" id="fontU"${(e.upper??(layEl==='name'&&current.game==='lorcana'))?' checked':''}> Mayúsculas</label>`:''}</div>
+      <p class="help" style="margin:-4px 0 8px">${layEl==='text'?'En el texto de reglas, la negrita y la cursiva salen de lo que escribas (**negrita**, *cursiva*, paréntesis); el grosor y la cursiva de aquí no se aplican.':'Con «Según la tipografía de la carta» se usa la elegida en la carta; grosor y cursiva solo se aplican al elegir otra fuente.'}</p>`:''}
+    <div class="row">${e.show!==undefined?`<label class="f chk"><input type="checkbox" data-lk="show"${e.show?' checked':''}> Mostrar</label>`:''}
+      ${e.badge!==undefined?`<label class="f chk"><input type="checkbox" data-lk="badge"${e.badge?' checked':''}> Con fondo DuckyLab</label>`:''}</div>
+    <div class="row"><button class="btn sm" id="layCopy">Copiar estas posiciones a mis otras plantillas</button><button class="btn sm" id="layReset">Restablecer este elemento</button></div></div>`;
+  $('#laySel').onchange=ev=>{layEl=ev.target.value;drawLayout();};
+  const hx=$('#hexIn');if(hx){hx.oninput=()=>{let v=hx.value.trim();if(v&&v[0]!=='#')v='#'+v;hx.classList.toggle('bad',!hexOk(v));if(!hexOk(v))return;
+      if(v.length===4)v='#'+v.slice(1).split('').map(c=>c+c).join('');e.color=v;const cp=box.querySelector('input[type=color][data-lk=color]');if(cp)cp.value=v.slice(0,7);frameChanged(F);};}
+  const cp=box.querySelector('input[type=color][data-lk=color]');if(cp)cp.addEventListener('input',()=>{if(hx){hx.value=cp.value;hx.classList.remove('bad');}});
+  const fs=$('#fontSel');if(fs){
+    const apply=()=>{e.font=fs.value;$('#fontCustomRow').classList.toggle('hidden',e.font!=='custom');const f=famOf(e);
+      if(f)document.fonts.load(`${e.italic?'italic ':''}${e.weight||'600'} 40px ${f}`).then(()=>{scheduleRender();schedulePicks();}).catch(()=>{});frameChanged(F);};
+    fs.onchange=apply;$('#fontCustom').oninput=ev=>{e.fontCustom=ev.target.value.trim();apply();};
+    $('#fontW').onchange=ev=>{e.weight=ev.target.value;apply();};$('#fontI').onchange=ev=>{e.italic=ev.target.checked;apply();};
+    if($('#fontU'))$('#fontU').onchange=ev=>{e.upper=ev.target.checked;frameChanged(F);};
+  }
+  box.querySelectorAll('[data-lk]').forEach(i=>{const k=i.dataset.lk;i.addEventListener(i.type==='checkbox'||i.tagName==='SELECT'?'change':'input',()=>{
+    const num=i.type==='range'||i.type==='number';if(num&&i.value==='')return;
+    e[k]=i.type==='checkbox'?i.checked:num?+i.value:i.value;
+    if(num)box.querySelectorAll(`[data-lk="${k}"]`).forEach(o=>{if(o!==i)o.value=e[k];});frameChanged(F);});});
+  $('#layCopy').onclick=async()=>{const others=FRAMES[current.game].filter(f=>f!==F);if(!others.length){toast('No tienes otras plantillas de este juego');return;}
+    if(!await confirmBox(`¿Copiar todas las posiciones de «${esc(F.name)}» a tus otras ${others.length} plantillas?`,'Copiar','pri'))return;
+    for(const o of others){o.layout=JSON.parse(JSON.stringify(F.layout));o._dirty=true;}await saveFrames(current.game);schedulePicks();toast('Posiciones copiadas');};
+  $('#layReset').onclick=()=>{L[layEl]=defaultLayout(current.game)[layEl];drawLayout();frameChanged(F);};
+
+  scheduleRender();
+}
+document.addEventListener('keydown',e=>{
+  if(!current||!layOn||layEl==='art'||!/^Arrow/.test(e.key))return;const t=document.activeElement;if(t&&/INPUT|TEXTAREA|SELECT/.test(t.tagName))return;
+  const F=frameOf(current);if(!F)return;const el=F.layout[layEl],st=e.shiftKey?10:1;e.preventDefault();
+  if(e.key==='ArrowLeft')el.x-=st;if(e.key==='ArrowRight')el.x+=st;if(e.key==='ArrowUp')el.y-=st;if(e.key==='ArrowDown')el.y+=st;
+  document.querySelectorAll('#layoutBox [data-lk="x"]').forEach(o=>o.value=el.x);document.querySelectorAll('#layoutBox [data-lk="y"]').forEach(o=>o.value=el.y);frameChanged(F);
+});
+async function setArt(file){
+  if(!current)return;
+  try{current.img=await fileToDataURL(file);current.art={x:0,y:0,z:1};$('#zoom').value=1;$('#pflip').classList.remove('flipped');
+    const dz=$('#dropArt');dz.textContent='Cambiar imagen: toca aquí, arrástrala o pégala (Ctrl+V)';changed();}
+  catch(e){toast('No se pudo leer la imagen');}
+}
+document.addEventListener('paste',e=>{
+  if(!current)return;const it=[...(e.clipboardData||{}).items||[]].find(i=>i.type.startsWith('image/'));
+  if(it){e.preventDefault();setArt(it.getAsFile());}
+});
+
+let rT=null,saveT=null;
+function changed(){if(current&&current._sample){scheduleRender();return;}scheduleRender();schedulePicks();current.updated=Date.now();clearTimeout(saveT);const c=current;saveT=setTimeout(()=>doSave(c),500);}
+async function doSave(c){saveT=null;try{await makeThumbs(c);await Store.put(c);const i=cards.findIndex(x=>x.id===c.id);if(i<0)cards.unshift(c);sortCards();}catch(e){toast('No se pudo guardar: '+e.message);}}
+async function flushSave(){if(saveT&&current&&!current._sample){clearTimeout(saveT);await doSave(current);}}
+let pickT=null;
+function schedulePicks(){clearTimeout(pickT);pickT=setTimeout(renderPicks,450);}
+async function renderPicks(){
+  const c=current;if(!c)return;
+  for(const b of document.querySelectorAll('#stylePick [data-style]')){const v={...c,data:{...c.data,style:b.dataset.style,fx:'none'}};const x=b.querySelector('canvas').getContext('2d');x.setTransform(.2,0,0,.2,0,0);await renderCard(x,v,'front');}
+  for(const b of document.querySelectorAll('#fxPick [data-fx]')){const v={...c,data:{...c.data,fx:b.dataset.fx}};const x=b.querySelector('canvas').getContext('2d');x.setTransform(.2,0,0,.2,0,0);await renderCard(x,v,'front');}
+  for(const k of ['_img','_back'])if(c[k]===undefined)delete c[k];
+}
+function scheduleRender(){if(current)$('#pflip').classList.toggle('fx-on',!!current.data.fx&&current.data.fx!=='none');if(rT)return;rT=requestAnimationFrame(async()=>{rT=null;if(!current)return;const fx=$('#cvF').getContext('2d');await renderCard(fx,current,'front');
+  const F=frameOf(current);if(F&&layOn&&layEl!=='art'&&F.layout[layEl]){const b=elBounds(layEl,F.layout[layEl]);fx.save();fx.setLineDash([10,7]);fx.lineWidth=4;fx.strokeStyle='#ffc93c';fx.strokeRect(b.x,b.y,b.w,b.h);fx.restore();}await renderCard($('#cvB').getContext('2d'),current,'back');});}
+
+$('#posBtn').onclick=()=>{const F=current&&frameOf(current);if(F)openTemplateEditor(F,current);};
+$('#flipBtn').onclick=()=>$('#pflip').classList.toggle('flipped');
+document.querySelectorAll('[data-exp]').forEach(b=>b.onclick=async()=>{if(!current)return;await flushSave();exportCard(current,b.dataset.exp,$('#expSide').value);});
+
+// Encuadre arrastrando sobre la carta
+(function(){
+  const cv=$('#cvF');let drag=null;
+  cv.addEventListener('pointerdown',e=>{if(!current)return;const F=frameOf(current);
+    if(F&&layOn){const r=cv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W,py=(e.clientY-r.top)/r.height*H;
+      const k=hitElement(F,px,py);
+      if(k){if(k!==layEl){layEl=k;drawLayout();}const el=F.layout[k];drag={x:e.clientX,y:e.clientY,el,F,ex:el.x,ey:el.y};cv.setPointerCapture(e.pointerId);return;}
+      if(layEl!=='art'){layEl='art';drawLayout();}}
+    if(!current.img)return;drag={x:e.clientX,y:e.clientY,ax:current.art.x,ay:current.art.y};cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const r=cv.getBoundingClientRect(),R=artRect(current);
+    if(drag.el){drag.el.x=Math.round(drag.ex+(e.clientX-drag.x)/r.width*W);drag.el.y=Math.round(drag.ey+(e.clientY-drag.y)/r.height*H);scheduleRender();return;}
+    current.art.x=drag.ax+(e.clientX-drag.x)/r.width*W/R.w;current.art.y=drag.ay+(e.clientY-drag.y)/r.height*H/R.h;scheduleRender();});
+  const end=()=>{if(drag){const d=drag;drag=null;if(d.el){frameChanged(d.F);drawLayout();}else changed();}};cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+  cv.addEventListener('wheel',e=>{if(!current)return;const F=frameOf(current);
+    if(F&&layOn){const r=cv.getBoundingClientRect(),k=hitElement(F,(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H);
+      if(k){e.preventDefault();const el=F.layout[k];if(k!==layEl){layEl=k;}el.size=Math.max(8,Math.min(120,el.size+(e.deltaY<0?1:-1)));drawLayout();frameChanged(F);return;}}
+    if(!current.img)return;e.preventDefault();current.art.z=Math.min(4,Math.max(1,(current.art.z||1)*(e.deltaY<0?1.06:1/1.06)));$('#zoom').value=current.art.z;changed();},{passive:false});
+  cv.addEventListener('dblclick',()=>{});
+})();
+
+/* ---------- Imprimir ---------- */
+async function openPrint(){
+  await flushSave();
+  let list=selMode&&selected.size?cards.filter(c=>selected.has(c.id)):null;
+  if(!list){
+    if(!cards.length){toast('Primero crea alguna carta');return;}
+    if(!selMode){toast('Marca las cartas que quieres imprimir y pulsa otra vez «Imprimir»');$('#selMode').click();return;}
+    toast('Marca al menos una carta');return;
+  }
+  const r=await modal(`<h2>🖨 Imprimir ${list.length} carta${list.length>1?'s':''}</h2>
+    <div class="row"><label class="f">Papel<select class="inp" id="pPaper"><option value="a4">A4 · 9 cartas por hoja</option><option value="letter">Carta (EE. UU.) · 9 por hoja</option><option value="card">Una carta por página (63×88 mm)</option></select></label>
+    <label class="f">Copias de cada carta<input class="inp" type="number" id="pCopies" min="1" max="60" value="1"></label></div>
+    <label class="f chk"><input type="checkbox" id="pBacks" checked> Incluir dorsos (para imprimir a doble cara)</label>
+    <label class="f chk"><input type="checkbox" id="pMarks" checked> Marcas de corte</label>
+    <p class="help">Las cartas salen a tamaño real (63 × 88 mm). Al imprimir, elige <b>tamaño real / 100 %</b>, no «ajustar a la página». Para doble cara, da la vuelta por el <b>borde largo</b>: los dorsos ya van colocados en espejo.</p>`,
+    [{label:'Cancelar',value:null},{label:'Crear PDF',cls:'pri',collect:m=>({paper:m.querySelector('#pPaper').value,copies:+m.querySelector('#pCopies').value||1,backs:m.querySelector('#pBacks').checked,marks:m.querySelector('#pMarks').checked})}]);
+  if(!r)return;
+  busy(true,'Creando PDF…');
+  try{const blob=await makePrintPDF(list.map(card=>({card,copies:r.copies})),r);busy(false);await saveFile(blob,`duckylab-imprimir-${new Date().toISOString().slice(0,10)}.pdf`);}
+  catch(e){busy(false);toast('Error al crear el PDF: '+e.message);}
+}
+
+/* ---------- Copia de seguridad ---------- */
+$('#backupBtn').onclick=async()=>{
+  await flushSave();
+  const r=await modal(`<h2>💾 Copia de seguridad</h2><p class="help">Tus cartas viven en este navegador. Descarga una copia para no perderlas o para pasarlas a otro dispositivo.</p>`,
+    [{label:'Cerrar',value:null},{label:'Restaurar copia…',value:'in'},{label:'Descargar copia',value:'out',cls:'pri'}]);
+  if(r==='out'){
+    const json=JSON.stringify({app:'duckylab',v:2,date:new Date().toISOString(),houseBacks:HOUSE,frames:{magic:FRAMES.magic.map(f=>({id:f.id,name:f.name,img:f.img,layout:f.layout})),lorcana:FRAMES.lorcana.map(f=>({id:f.id,name:f.name,img:f.img,layout:f.layout}))},cards:cards.map(c=>JSON.parse(JSON.stringify(c,(k,v)=>k.startsWith('_')||k==='thumbF'||k==='thumbB'?undefined:v)))});
+    if(await saveFile(new Blob([json],{type:'application/json'}),`duckylab-copia-${new Date().toISOString().slice(0,10)}.json`)){await Store.putSet('lastBackup',Date.now());$('#bkWarn')&&$('#bkWarn').remove();}
+  }else if(r==='in'){
+    const f=document.createElement('input');f.type='file';f.accept='.json,application/json';
+    f.onchange=async()=>{
+      try{const j=JSON.parse(await f.files[0].text());if(j.app!=='duckylab'||!Array.isArray(j.cards))throw new Error('no es una copia de DuckyLab');
+        busy(true,'Restaurando…');
+        if(j.frames)for(const g of ['magic','lorcana'])for(const f of (j.frames[g]||[])){const i=FRAMES[g].findIndex(x=>x.id===f.id);if(i>=0)FRAMES[g][i]=f;else FRAMES[g].push(f);await saveFrames(g);}
+        if(j.houseBacks)for(const g of ['magic','lorcana'])if(j.houseBacks[g]){HOUSE[g]=j.houseBacks[g];await Store.putSet('back-'+g,HOUSE[g]);}
+        for(const c of j.cards){if(!c.id||!c.data)continue;c.art=c.art||{x:0,y:0,z:1};c.back=c.back||{mode:'default',img:null};await makeThumbs(c);await Store.put(c);const i=cards.findIndex(x=>x.id===c.id);if(i>=0)cards[i]=c;else cards.push(c);}
+        sortCards();busy(false);current=null;show('gallery');renderGallery();toast(`Restauradas ${j.cards.length} cartas`);
+      }catch(e){busy(false);toast('No se pudo restaurar: '+e.message,4000);}
+    };
+    f.click();
+  }
+};
+
+/* ---------- Instalar como app ---------- */
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installBtn').classList.remove('hidden');});
+$('#installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$('#installBtn').classList.add('hidden');};
+try{if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
+
+/* ---------- Arranque ---------- */
+(async()=>{
+  await Store.open();
+  try{cards=await Store.all();}catch(e){cards=[];}
+  FRAMES.magic=(await Store.getSet('frames-magic'))||[];FRAMES.lorcana=(await Store.getSet('frames-lorcana'))||[];
+  HOUSE.magic=await Store.getSet('back-magic');HOUSE.lorcana=await Store.getSet('back-lorcana');
+  sortCards();renderGallery();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});}catch(e){}
+  try{const last=await Store.getSet('lastBackup');
+    if(cards.length&&(!last||Date.now()-last>14*864e5)){
+      const w=document.createElement('div');w.id='bkWarn';w.className='bkwarn';
+      w.innerHTML=`💾 <span>${last?'Hace más de dos semanas que no descargas una copia de tus cartas.':'Aún no has descargado ninguna copia de tus cartas.'} Tus cartas solo están en este navegador: si se borran sus datos, se pierden.</span><button class="btn sm pri">Descargar copia</button><button class="btn sm" title="Cerrar">✕</button>`;
+      const [b1,b2]=w.querySelectorAll('button');b1.onclick=()=>$('#backupBtn').click();b2.onclick=()=>w.remove();
+      $('main').prepend(w);}
+  }catch(e){}
+  // cuando llegan las fuentes, se vuelven a dibujar miniaturas y vista previa
+  try{
+    await Promise.race([Promise.all([document.fonts.load(`700 40px Cinzel`),...['400 30px Barlow','500 30px Barlow','600 30px Barlow','700 30px Barlow','italic 600 30px Barlow','italic 500 30px Barlow','600 40px "Barlow Condensed"','700 40px "Cormorant Garamond"','600 40px "Cormorant Garamond"','400 30px "Libre Baskerville"','italic 400 30px "Libre Baskerville"','700 30px "Libre Baskerville"'].map(f=>document.fonts.load(f)),document.fonts.load(`400 30px "EB Garamond"`),document.fonts.load(`italic 400 30px "EB Garamond"`),document.fonts.load(`700 30px "EB Garamond"`)]),new Promise(r=>setTimeout(r,5000))]);
+    if(document.fonts.check(`400 30px "EB Garamond"`)){
+      const key='dl-fonts-ok2';let had=false;try{had=localStorage.getItem(key)==='1';localStorage.setItem(key,'1');}catch(e){}
+      if(!had){for(const c of cards){await makeThumbs(c);await Store.put(c);}renderGallery();}
+      if(current)scheduleRender();
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
