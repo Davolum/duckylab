@@ -1,6 +1,6 @@
 // DuckyLab — permite abrir la app sin conexión.
 // Si cambias index.html, sube también este archivo cambiando VERSION.
-const VERSION = 'duckylab-v11';
+const VERSION = 'duckylab-v12';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

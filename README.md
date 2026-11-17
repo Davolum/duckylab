@@ -42,7 +42,8 @@ Cada persona que abre el enlace tiene su propio DuckyLab: lo que crea se guarda 
   - dorsos en páginas alternas, ya en espejo para imprimir a doble cara (dando la vuelta por el borde largo);
   - marcas de corte.
   - Al imprimir, elige **tamaño real / 100 %**, no «ajustar a la página». Cada carta mide 63 × 88 mm, como las de verdad.
-- **💾 Copia**: descarga o restaura un archivo con todas tus cartas, tus dorsos y tus marcos guardados (imágenes incluidas).
+- **💾 Copia de seguridad**: «⬇ Copia (.json)» descarga un archivo con todas tus cartas, plantillas y dorsos (imágenes incluidas); «⬆ Restaurar» lo recupera en cualquier navegador sin borrar lo que ya hay. Si pasan dos semanas sin copia, la app avisa.
+- **Cartas de ejemplo**: si junto a `index.html` hay un `ejemplos.json` (una copia de DuckyLab), quien abre la app por primera vez recibe esas cartas. Lo que cree después es solo suyo. Desde «💾 Copia de seguridad» se pueden volver a añadir.
 
 ## Archivos
 
@@ -51,6 +52,7 @@ Cada persona que abre el enlace tiene su propio DuckyLab: lo que crea se guarda 
 | `index.html` | La app entera |
 | `manifest.webmanifest`, `sw.js` | Permiten instalarla como app y abrirla sin conexión |
 | `icon.svg`, `icon-192.png`, `icon-512.png` | Iconos |
+| `ejemplos.json` | Cartas de ejemplo para quien abre la app por primera vez |
 
 ## Publicarla gratis en GitHub Pages
 
@@ -72,7 +74,7 @@ En el **navegador** de cada dispositivo, no en internet. Si se borran los datos 
 
 ## Actualizar la app
 
-Si cambias `index.html`, súbelo de nuevo y **sube también `sw.js` cambiando `VERSION`** (por ejemplo de `duckylab-v11` a `duckylab-v12`). Así el móvil coge la versión nueva. Las cartas guardadas no se tocan.
+Si cambias `index.html`, súbelo de nuevo y **sube también `sw.js` cambiando `VERSION`** (por ejemplo de `duckylab-v12` a `duckylab-v13`). Así el móvil coge la versión nueva. Las cartas guardadas no se tocan.
 
 ## Nota
 

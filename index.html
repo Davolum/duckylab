@@ -137,12 +137,12 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 16px}
 </head>
 <body>
 <header>
-  <div class="logo" id="goHome" title="Mis cartas">🦆 <span>DuckyLab</span><small style="font-size:11px;color:var(--muted);font-weight:600">v11</small></div>
+  <div class="logo" id="goHome" title="Mis cartas">🦆 <span>DuckyLab</span><small style="font-size:11px;color:var(--muted);font-weight:600">v12</small></div>
   <button class="btn pri" id="newMagic">+ Carta Magic</button>
   <button class="btn pri" id="newLorcana">+ Carta Lorcana</button>
   <button class="btn" id="cardsBtn">🃏 Mis cartas</button>
   <button class="btn" id="tplBtn">🖼 Plantillas</button>
-  <button class="btn" id="backupBtn">💾 Copia</button>
+  <button class="btn" id="backupBtn">💾 Copia de seguridad</button>
   <button class="btn hidden" id="installBtn">⬇ Instalar</button>
 </header>
 
@@ -157,6 +157,8 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 16px}
       <button class="btn" id="selMode">☑ Seleccionar</button>
       <button class="btn hidden" id="selAll">Todas</button>
       <button class="btn pri" id="printBtn">🖨 Imprimir</button>
+      <button class="btn" id="dlJson" title="Descarga un archivo con todas tus cartas, plantillas y dorsos">⬇ Copia (.json)</button>
+      <button class="btn" id="upJson" title="Recupera tus cartas desde un archivo de copia">⬆ Restaurar</button>
     </div>
     <div class="grid" id="grid"></div>
     <div class="empty hidden" id="empty">
@@ -198,7 +200,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 16px}
     </div>
   </section>
 </main>
-<footer><b>DuckyLab v11</b> · creador de cartas personal y no oficial. Las cartas se guardan en este navegador: haz una 💾 Copia de vez en cuando.<br>Magic: The Gathering © Wizards of the Coast · Disney Lorcana © Disney / Ravensburger. Marcos y dorsos de diseño propio.</footer>
+<footer><b>DuckyLab v12</b> · creador de cartas personal y no oficial. Las cartas se guardan en este navegador: haz una 💾 Copia de vez en cuando.<br>Magic: The Gathering © Wizards of the Coast · Disney Lorcana © Disney / Ravensburger. Marcos y dorsos de diseño propio.</footer>
 <div id="toast"></div>
 
 <script>
@@ -1146,6 +1148,7 @@ $('#search').addEventListener('input',renderGallery);
 $('#selMode').onclick=()=>{selMode=!selMode;if(!selMode)selected.clear();$('#selMode').classList.toggle('pri',selMode);$('#selAll').classList.toggle('hidden',!selMode);renderGallery();};
 $('#selAll').onclick=()=>{const vis=[...document.querySelectorAll('.tile')].map(t=>t.dataset.id);const all=vis.every(id=>selected.has(id));vis.forEach(id=>all?selected.delete(id):selected.add(id));renderGallery();};
 $('#printBtn').onclick=()=>openPrint();
+$('#dlJson').onclick=()=>downloadBackup();$('#upJson').onclick=()=>restoreBackup();
 
 function show(view){['gallery','editor','templates'].forEach(v=>$('#'+v).classList.toggle('hidden',view!==v));window.scrollTo(0,0);}
 let mode='card',tplReturn=null; // mode: 'card' (creador de cartas) o 'tpl' (editor de plantillas)
@@ -1543,26 +1546,43 @@ async function openPrint(){
 }
 
 /* ---------- Copia de seguridad ---------- */
+/* Copia de seguridad en JSON */
+async function downloadBackup(){
+  await flushSave();
+  const json=JSON.stringify({app:'duckylab',v:2,date:new Date().toISOString(),houseBacks:HOUSE,frames:{magic:FRAMES.magic.map(f=>({id:f.id,name:f.name,img:f.img,layout:f.layout})),lorcana:FRAMES.lorcana.map(f=>({id:f.id,name:f.name,img:f.img,layout:f.layout}))},cards:cards.map(c=>JSON.parse(JSON.stringify(c,(k,v)=>k.startsWith('_')||k==='thumbF'||k==='thumbB'?undefined:v)))});
+  if(await saveFile(new Blob([json],{type:'application/json'}),`duckylab-copia-${new Date().toISOString().slice(0,10)}.json`)){await Store.putSet('lastBackup',Date.now());$('#bkWarn')&&$('#bkWarn').remove();toast('Copia descargada');}
+}
+async function importBackup(j,quiet){
+  if(j.app!=='duckylab'||!Array.isArray(j.cards))throw new Error('no es una copia de DuckyLab');
+  if(j.frames)for(const g of ['magic','lorcana'])for(const f of (j.frames[g]||[])){const i=FRAMES[g].findIndex(x=>x.id===f.id);if(i>=0)FRAMES[g][i]=f;else FRAMES[g].push(f);await saveFrames(g);}
+  if(j.houseBacks)for(const g of ['magic','lorcana'])if(j.houseBacks[g]&&(!quiet||!HOUSE[g])){HOUSE[g]=j.houseBacks[g];await Store.putSet('back-'+g,HOUSE[g]);}
+  for(const c of j.cards){if(!c.id||!c.data)continue;c.art=c.art||{x:0,y:0,z:1};c.back=c.back||{mode:'default',img:null};await makeThumbs(c);await Store.put(c);const i=cards.findIndex(x=>x.id===c.id);if(i>=0)cards[i]=c;else cards.push(c);}
+  sortCards();return j.cards.length;
+}
+function restoreBackup(){
+  const f=document.createElement('input');f.type='file';f.accept='.json,application/json';
+  f.onchange=async()=>{
+    try{const j=JSON.parse(await f.files[0].text());busy(true,'Restaurando…');const n=await importBackup(j);busy(false);current=null;setMode('card');show('gallery');renderGallery();toast(`Restauradas ${n} cartas`);}
+    catch(e){busy(false);toast('No se pudo restaurar: '+e.message,4000);}
+  };
+  f.click();
+}
+/* Cartas de ejemplo que vienen con la app (archivo ejemplos.json junto a index.html) */
+async function loadExamples(force){
+  try{
+    const r=await fetch('ejemplos.json',{cache:'no-cache'});if(!r.ok)return 0;
+    const j=await r.json();busy(true,'Añadiendo cartas de ejemplo…');const n=await importBackup(j,true);busy(false);
+    await Store.putSet('examplesLoaded',Date.now());if(!(await Store.getSet('lastBackup')))await Store.putSet('lastBackup',Date.now());return n;
+  }catch(e){busy(false);return 0;}
+}
 $('#backupBtn').onclick=async()=>{
   await flushSave();
-  const r=await modal(`<h2>💾 Copia de seguridad</h2><p class="help">Tus cartas viven en este navegador. Descarga una copia para no perderlas o para pasarlas a otro dispositivo.</p>`,
-    [{label:'Cerrar',value:null},{label:'Restaurar copia…',value:'in'},{label:'Descargar copia',value:'out',cls:'pri'}]);
-  if(r==='out'){
-    const json=JSON.stringify({app:'duckylab',v:2,date:new Date().toISOString(),houseBacks:HOUSE,frames:{magic:FRAMES.magic.map(f=>({id:f.id,name:f.name,img:f.img,layout:f.layout})),lorcana:FRAMES.lorcana.map(f=>({id:f.id,name:f.name,img:f.img,layout:f.layout}))},cards:cards.map(c=>JSON.parse(JSON.stringify(c,(k,v)=>k.startsWith('_')||k==='thumbF'||k==='thumbB'?undefined:v)))});
-    if(await saveFile(new Blob([json],{type:'application/json'}),`duckylab-copia-${new Date().toISOString().slice(0,10)}.json`)){await Store.putSet('lastBackup',Date.now());$('#bkWarn')&&$('#bkWarn').remove();}
-  }else if(r==='in'){
-    const f=document.createElement('input');f.type='file';f.accept='.json,application/json';
-    f.onchange=async()=>{
-      try{const j=JSON.parse(await f.files[0].text());if(j.app!=='duckylab'||!Array.isArray(j.cards))throw new Error('no es una copia de DuckyLab');
-        busy(true,'Restaurando…');
-        if(j.frames)for(const g of ['magic','lorcana'])for(const f of (j.frames[g]||[])){const i=FRAMES[g].findIndex(x=>x.id===f.id);if(i>=0)FRAMES[g][i]=f;else FRAMES[g].push(f);await saveFrames(g);}
-        if(j.houseBacks)for(const g of ['magic','lorcana'])if(j.houseBacks[g]){HOUSE[g]=j.houseBacks[g];await Store.putSet('back-'+g,HOUSE[g]);}
-        for(const c of j.cards){if(!c.id||!c.data)continue;c.art=c.art||{x:0,y:0,z:1};c.back=c.back||{mode:'default',img:null};await makeThumbs(c);await Store.put(c);const i=cards.findIndex(x=>x.id===c.id);if(i>=0)cards[i]=c;else cards.push(c);}
-        sortCards();busy(false);current=null;show('gallery');renderGallery();toast(`Restauradas ${j.cards.length} cartas`);
-      }catch(e){busy(false);toast('No se pudo restaurar: '+e.message,4000);}
-    };
-    f.click();
-  }
+  const r=await modal(`<h2>💾 Copia de seguridad</h2><p class="help">Tus cartas, plantillas y dorsos viven en este navegador. Descarga una copia en un archivo <b>.json</b> para no perderlos, o para pasarlos a otro ordenador o al móvil y restaurarlos allí.</p>
+    <p class="help">«Restaurar» añade lo que haya en la copia sin borrar lo que ya tienes.</p>`,
+    [{label:'Cerrar',value:null},{label:'Volver a añadir los ejemplos',value:'ex'},{label:'⬆ Restaurar copia…',value:'in'},{label:'⬇ Descargar copia (.json)',value:'out',cls:'pri'}]);
+  if(r==='out')downloadBackup();
+  else if(r==='in')restoreBackup();
+  else if(r==='ex'){const n=await loadExamples(true);if(n){setMode('card');current=null;show('gallery');renderGallery();toast(`Añadidas ${n} cartas de ejemplo`);}else toast('Esta versión no trae cartas de ejemplo');}
 };
 
 /* ---------- Instalar como app ---------- */
@@ -1578,6 +1598,7 @@ try{if('serviceWorker' in navigator&&location.protocol.startsWith('http'))naviga
   FRAMES.magic=(await Store.getSet('frames-magic'))||[];FRAMES.lorcana=(await Store.getSet('frames-lorcana'))||[];
   HOUSE.magic=await Store.getSet('back-magic');HOUSE.lorcana=await Store.getSet('back-lorcana');
   sortCards();renderGallery();
+  try{if(!cards.length&&!(await Store.getSet('examplesLoaded'))){const n=await loadExamples();if(n){renderGallery();toast(`Bienvenido a DuckyLab: tienes ${n} cartas de ejemplo para empezar`,4500);}}}catch(e){}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});}catch(e){}
   try{const last=await Store.getSet('lastBackup');
     if(cards.length&&(!last||Date.now()-last>14*864e5)){
